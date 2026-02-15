@@ -79,6 +79,11 @@ button:active {
     margin-top: 10px;
     font-weight: bold;
 }
+.final-result {
+    font-size: 7vw;
+    color: #00ff00;
+    margin: 20px 0;
+}
 @media screen and (max-width: 600px) {
     .answer { font-size: 8vw; }
     input { font-size: 6vw; }
@@ -86,6 +91,7 @@ button:active {
     .strike { font-size: 15vw; }
     .team-score { font-size: 7vw; }
     .current-team { font-size: 6vw; }
+    .final-result { font-size: 9vw; }
 }
 </style>
 </head>
@@ -106,12 +112,14 @@ button:active {
 
     <input id="guessInput" placeholder="Enter answer">
     <br>
-    <button onclick="submitAnswer()">Submit</button>
+    <button id="submitBtn" onclick="submitAnswer()">Submit</button>
     <div class="controls">
-        <button onclick="switchTeam()">Switch Team</button>
-        <button onclick="nextQuestion()">Next Question</button>
-        <button onclick="revealAll()">Reveal All</button>
+        <button id="switchBtn" onclick="switchTeam()">Switch Team</button>
+        <button id="nextBtn" onclick="nextQuestion()">Next Question</button>
+        <button id="revealBtn" onclick="revealAll()">Reveal All</button>
     </div>
+
+    <div class="final-result" id="finalResult"></div>
 </div>
 
 <!-- SOUND EFFECTS -->
@@ -164,6 +172,7 @@ function loadQuestion() {
     q.answers.forEach(a => a.revealed = false);
     strikes = { A: 0, B: 0 };
     document.getElementById("question").innerText = q.question;
+    document.getElementById("finalResult").innerText = "";
     renderBoard();
 }
 
@@ -203,7 +212,7 @@ document.getElementById("guessInput").addEventListener("keydown", function(event
 });
 
 // =====================
-// 🔹 ANSWER LOGIC
+// 🔹 ANSWER LOGIC (contains match)
 // =====================
 function submitAnswer() {
     const input = document.getElementById("guessInput");
@@ -212,7 +221,6 @@ function submitAnswer() {
     if (!guess) return;
 
     const q = gameData[currentQuestionIndex];
-    // Contains match: guess matches if input is contained in answer
     const match = q.answers.find(a => !a.revealed && a.text.includes(guess));
 
     if (match) {
@@ -224,7 +232,7 @@ function submitAnswer() {
     } else {
         strikes[currentTeam]++;
         wrongSound.play();
-        // Animate the strike
+        // Animate strike
         const strikeEl = document.getElementById(`strikes${currentTeam}`);
         strikeEl.style.transform = "scale(1.5)";
         setTimeout(() => { strikeEl.style.transform = "scale(1)"; }, 300);
@@ -237,22 +245,43 @@ function submitAnswer() {
     }
 }
 
+// =====================
+// 🔹 SWITCH TEAM
+// =====================
 function switchTeam() {
     currentTeam = currentTeam === "A" ? "B" : "A";
     teamSwitchSound.play();
     renderBoard();
 }
 
+// =====================
+// 🔹 NEXT QUESTION & GAME END
+// =====================
 function nextQuestion() {
     currentQuestionIndex++;
+
     if (currentQuestionIndex >= gameData.length) {
-        alert(`Game Over!\nTeam A: ${teamPoints.A} | Team B: ${teamPoints.B}`);
-        currentQuestionIndex = 0;
-        teamPoints = { A: 0, B: 0 };
+        // Game Over
+        let winner = "";
+        if (teamPoints.A > teamPoints.B) winner = "Team A Wins!";
+        else if (teamPoints.B > teamPoints.A) winner = "Team B Wins!";
+        else winner = "It's a Tie!";
+        document.getElementById("finalResult").innerText =
+            `GAME OVER\n${winner}\nFinal Scores - Team A: ${teamPoints.A} | Team B: ${teamPoints.B}`;
+
+        // Disable inputs & buttons
+        document.getElementById("guessInput").disabled = true;
+        document.querySelectorAll("button").forEach(btn => btn.disabled = true);
+        document.getElementById("currentTeam").innerText = "GAME OVER";
+        return;
     }
+
     loadQuestion();
 }
 
+// =====================
+// 🔹 REVEAL ALL ANSWERS
+// =====================
 function revealAll() {
     const q = gameData[currentQuestionIndex];
     q.answers.forEach(a => a.revealed = true);
@@ -260,6 +289,9 @@ function revealAll() {
     renderBoard();
 }
 
+// =====================
+// 🔹 INITIALIZE GAME
+// =====================
 loadQuestion();
 </script>
 </body>
