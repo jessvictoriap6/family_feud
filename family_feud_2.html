@@ -130,7 +130,7 @@ button {
 
     <div class="current-team" id="currentTeam"></div>
 
-    <div>Time Left: <span id="roundTimer">30</span>s</div>
+    <div>Time Left for Current Guess: <span id="roundTimer">30</span>s</div>
 
     <input id="guessInput" placeholder="Enter answer">
     <br>
@@ -199,7 +199,7 @@ function loadQuestion() {
     document.getElementById("finalResult").innerText="";
     document.body.classList.remove("win-background");
     renderBoard();
-    startTimer();
+    resetTimer(); // start timer fresh for first answer
 }
 
 function renderBoard() {
@@ -229,6 +229,7 @@ document.getElementById("guessInput").addEventListener("keydown", function(e){
 });
 
 function submitAnswer(){
+    resetTimer(); // reset 30 seconds for each attempt
     const input=document.getElementById("guessInput");
     const guess=input.value.trim().toLowerCase();
     input.value="";
@@ -272,7 +273,7 @@ function nextQuestion(){
         document.getElementById("currentTeam").innerText="GAME OVER";
         return;
     }
-    loadQuestion();
+    loadQuestion(); // new question
 }
 
 function revealAll(){
@@ -282,10 +283,9 @@ function revealAll(){
 }
 
 // =====================
-// Timer per round with pause
+// Timer per attempt
 // =====================
 function startTimer(){
-    roundTime = 30; 
     document.getElementById("roundTimer").innerText = roundTime;
     clearInterval(timerInterval);
     timerPaused = false;
@@ -295,14 +295,20 @@ function startTimer(){
             document.getElementById("roundTimer").innerText = roundTime;
             if(roundTime <= 0){
                 clearInterval(timerInterval);
-                alert(`Time's up for Team ${currentTeam}! Switching team.`);
-                switchTeam();
+                alert(`Time's up for Team ${currentTeam}! Counting as a wrong attempt.`);
+                strikes[currentTeam]++;
+                renderBoard();
+                if(strikes[currentTeam]>=maxStrikes){ switchTeam(); }
+                resetTimer(); // reset for next attempt
             }
         }
-    }, 1000);
+    },1000);
 }
 
-function resetTimer(){ clearInterval(timerInterval); startTimer(); }
+function resetTimer(){
+    roundTime = 30; // full 30s for every attempt
+    startTimer();
+}
 
 function togglePause(){
     timerPaused = !timerPaused;
