@@ -121,9 +121,7 @@ button {
 <h1>FAMILY FEUD</h1>
 
 <div id="scores">Team A: 0 | Team B: 0</div>
-
 <div id="question"></div>
-
 <div id="answers"></div>
 
 <div id="status">
@@ -158,7 +156,7 @@ button {
 
 <script>
 /* =====================
-   CONSISTENT GAME DATA
+   GAME DATA (EDIT HERE)
    ===================== */
 const gameData = [
 {
@@ -232,6 +230,9 @@ const gameData = [
 ];
 
 
+/* =====================
+   GAME STATE
+   ===================== */
 let qIndex = 0;
 let currentTeam = "A";
 let scores = { A: 0, B: 0 };
@@ -242,6 +243,26 @@ let paused = false;
 
 const $ = id => document.getElementById(id);
 
+/* =====================
+   RELAXED MATCHING
+   ===================== */
+function normalize(str) {
+    return str
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+}
+
+function isMatch(answer, guess) {
+    const a = normalize(answer);
+    const g = normalize(guess);
+    return a.includes(g) || g.includes(a);
+}
+
+/* =====================
+   GAME FUNCTIONS
+   ===================== */
 function loadQuestion() {
     gameData[qIndex].answers.forEach(a => a.revealed = false);
     strikes = { A: 0, B: 0 };
@@ -255,7 +276,7 @@ function render() {
     $("currentTeam").textContent = `Team ${currentTeam}`;
 
     $("answers").innerHTML = gameData[qIndex].answers.map(a =>
-        `<div class="answer ${a.revealed ? 'revealed' : ''}">
+        `<div class="answer ${a.revealed ? "revealed" : ""}">
             ${a.revealed ? a.text.toUpperCase() + " " + a.points : "____"}
         </div>`
     ).join("");
@@ -266,12 +287,13 @@ function render() {
 
 function submitAnswer() {
     resetTimer();
-    const guess = $("guess").value.toLowerCase().trim();
+    const guess = $("guess").value.trim();
     $("guess").value = "";
     if (!guess) return;
 
-    const match = gameData[qIndex].answers
-        .find(a => !a.revealed && a.text.includes(guess));
+    const match = gameData[qIndex].answers.find(a =>
+        !a.revealed && isMatch(a.text, guess)
+    );
 
     if (match) {
         match.revealed = true;
@@ -305,6 +327,9 @@ function nextQuestion() {
     loadQuestion();
 }
 
+/* =====================
+   TIMER (PER ATTEMPT)
+   ===================== */
 function startTimer() {
     clearInterval(timer);
     time = 30;
@@ -331,11 +356,18 @@ function pauseTimer() {
     paused = !paused;
 }
 
+/* =====================
+   EVENTS
+   ===================== */
 $("guess").addEventListener("keydown", e => {
     if (e.key === "Enter") submitAnswer();
 });
 
+/* =====================
+   START GAME
+   ===================== */
 loadQuestion();
 </script>
+
 </body>
 </html>
