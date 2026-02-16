@@ -105,6 +105,7 @@ button {
 #controls {
     display: flex;
     gap: 4px;
+    flex-wrap: wrap;
 }
 
 #final {
@@ -143,6 +144,7 @@ button {
     <button onclick="switchTeam()">Switch</button>
     <button onclick="pauseTimer()">Pause</button>
     <button onclick="nextQuestion()">Next</button>
+    <button onclick="revealAll()">Reveal All</button>
 </div>
 
 <div id="final"></div>
@@ -156,7 +158,7 @@ button {
 
 <script>
 /* =====================
-   GAME DATA (EDIT HERE)
+   GAME DATA
    ===================== */
 const gameData = [
 {
@@ -325,6 +327,14 @@ function nextQuestion() {
         return;
     }
     loadQuestion();
+}
+
+/* =====================
+   REVEAL ALL
+   ===================== */
+function revealAll() {
+    gameData[qIndex].answers.forEach(a => a.revealed = true);
+    render();
 }
 
 /* =====================
