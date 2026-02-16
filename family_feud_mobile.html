@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Family Feud – Mobile</title>
+
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+    background: #02122e;
+    color: white;
+    font-family: Arial Black, sans-serif;
+    overflow: hidden; /* NO SCROLL */
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+h1 {
+    text-align: center;
+    color: gold;
+    font-size: 6vw;
+    margin: 4px 0;
+}
+
+#scores {
+    text-align: center;
+    font-size: 4vw;
+    margin-bottom: 4px;
+}
+
+#question {
+    text-align: center;
+    font-size: 4.5vw;
+    margin: 6px 0;
+}
+
+#answers {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.answer {
+    background: gold;
+    color: #02122e;
+    border-radius: 8px;
+    padding: 6px;
+    font-size: 4vw;
+    font-weight: bold;
+    text-align: center;
+}
+
+.answer.revealed {
+    background: #00c853;
+    color: white;
+}
+
+#status {
+    display: flex;
+    justify-content: space-between;
+    font-size: 4vw;
+    margin: 4px 0;
+}
+
+#timer {
+    text-align: center;
+    font-size: 6vw;
+    color: #ff5252;
+}
+
+#strikes {
+    display: flex;
+    justify-content: space-around;
+    font-size: 7vw;
+    margin: 4px 0;
+}
+
+#inputArea {
+    display: flex;
+    gap: 4px;
+}
+
+input {
+    flex: 1;
+    font-size: 4vw;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+}
+
+button {
+    font-size: 4vw;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+}
+
+#controls {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+#final {
+    text-align: center;
+    font-size: 6vw;
+    color: #00e676;
+    margin-top: 6px;
+}
+</style>
+</head>
+
+<body>
+<div id="app">
+
+<h1>FAMILY FEUD</h1>
+
+<div id="scores">Team A: 0 | Team B: 0</div>
+
+<div id="question"></div>
+
+<div id="answers"></div>
+
+<div id="status">
+    <div id="currentTeam"></div>
+    <div id="timer">30</div>
+</div>
+
+<div id="strikes">
+    <div>🅰️ <span id="strikesA"></span></div>
+    <div>🅱️ <span id="strikesB"></span></div>
+</div>
+
+<div id="inputArea">
+    <input id="guess" placeholder="Enter answer">
+    <button onclick="submitAnswer()">OK</button>
+</div>
+
+<div id="controls">
+    <button onclick="switchTeam()">Switch</button>
+    <button onclick="pauseTimer()">Pause</button>
+    <button onclick="nextQuestion()">Next</button>
+</div>
+
+<div id="final"></div>
+
+</div>
+
+<!-- SOUNDS -->
+<audio id="correct" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+<audio id="wrong" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+<audio id="buzz" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+<script>
+const data = [
+  {
+    q: "Name something people bring to a picnic",
+    a: [
+      {t:"food",p:30,r:false},
+      {t:"drinks",p:25,r:false},
+      {t:"blanket",p:20,r:false},
+      {t:"basket",p:15,r:false}
+    ]
+  },
+  {
+    q: "Name a reason people are late to work",
+    a: [
+      {t:"traffic",p:35,r:false},
+      {t:"overslept",p:30,r:false},
+      {t:"kids",p:20,r:false},
+      {t:"weather",p:15,r:false}
+    ]
+  }
+];
+
+let qi = 0;
+let team = "A";
+let points = {A:0,B:0};
+let strikes = {A:0,B:0};
+let time = 30;
+let timer;
+let paused = false;
+
+const $ = id => document.getElementById(id);
+
+function loadQ(){
+  data[qi].a.forEach(x=>x.r=false);
+  strikes={A:0,B:0};
+  render();
+  resetTimer();
+}
+
+function render(){
+  $("scores").textContent = `Team A: ${points.A} | Team B: ${points.B}`;
+  $("question").textContent = data[qi].q;
+  $("currentTeam").textContent = `Team ${team}`;
+  $("answers").innerHTML = data[qi].a.map(x =>
+    `<div class="answer ${x.r?'revealed':''}">
+      ${x.r ? x.t.toUpperCase()+" "+x.p : "____"}
+     </div>`).join("");
+  $("strikesA").textContent = "❌".repeat(strikes.A);
+  $("strikesB").textContent = "❌".repeat(strikes.B);
+}
+
+function submitAnswer(){
+  resetTimer();
+  let g = $("guess").value.toLowerCase().trim();
+  $("guess").value="";
+  if(!g) return;
+
+  let match = data[qi].a.find(x=>!x.r && x.t.includes(g));
+  if(match){
+    match.r=true;
+    points[team]+=match.p;
+    $("correct").play();
+  }else{
+    strikes[team]++;
+    $("wrong").play();
+    if(strikes[team]>=3) switchTeam();
+  }
+  render();
+}
+
+function switchTeam(){
+  team = team==="A"?"B":"A";
+  $("buzz").play();
+  resetTimer();
+  render();
+}
+
+function nextQuestion(){
+  qi++;
+  if(qi>=data.length){
+    clearInterval(timer);
+    $("final").textContent =
+      points.A>points.B ? "TEAM A WINS!" :
+      points.B>points.A ? "TEAM B WINS!" : "IT'S A TIE!";
+    document.querySelectorAll("button,input").forEach(x=>x.disabled=true);
+    return;
+  }
+  loadQ();
+}
+
+function startTimer(){
+  clearInterval(timer);
+  time=30;
+  $("timer").textContent=time;
+  timer=setInterval(()=>{
+    if(!paused){
+      time--;
+      $("timer").textContent=time;
+      if(time<=0){
+        clearInterval(timer);
+        strikes[team]++;
+        switchTeam();
+      }
+    }
+  },1000);
+}
+
+function resetTimer(){ paused=false; startTimer(); }
+function pauseTimer(){ paused=!paused; }
+
+$("guess").addEventListener("keydown",e=>{
+  if(e.key==="Enter") submitAnswer();
+});
+
+loadQ();
+</script>
+</body>
+</html>
