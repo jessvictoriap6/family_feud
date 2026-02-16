@@ -123,6 +123,133 @@ button {
     font-size: 6vw;
     color: #00e676;
 }
+
+/* ========== ADMIN PANEL STYLES (MOBILE) ========== */
+.admin-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 1000;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.admin-overlay.active { display: block; }
+.admin-panel {
+    padding: 16px;
+    font-family: Arial, sans-serif;
+    min-height: 100%;
+}
+.admin-panel h2 {
+    color: #ffd700;
+    text-align: center;
+    margin: 8px 0 16px;
+    font-size: 5.5vw;
+}
+.admin-panel h3 {
+    color: #ffcc00;
+    margin: 14px 0 8px;
+    font-size: 4.5vw;
+}
+.admin-panel input, .admin-panel select {
+    font-size: 4vw;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #0f0f23;
+    color: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+}
+.admin-panel input:focus { outline: 2px solid #ffd700; }
+.admin-panel button {
+    font-size: 3.8vw;
+    padding: 10px 14px;
+    margin: 4px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+.abtn-primary { background: #ffd700; color: #020d26; }
+.abtn-danger { background: #cc3333; color: #fff; }
+.abtn-secondary { background: #555; color: #fff; }
+.abtn-success { background: #28a745; color: #fff; }
+.admin-question-card {
+    background: #0f0f23;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+.admin-question-card .q-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.admin-question-card .q-header span {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 3.8vw;
+    flex: 1;
+}
+.admin-answer-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 5px;
+}
+.admin-answer-row input { margin-bottom: 0; }
+.admin-answer-row input:first-child { flex: 3; }
+.admin-answer-row input:nth-child(2) { flex: 1; max-width: 80px; }
+.admin-answer-row button { flex-shrink: 0; padding: 8px 10px; }
+.admin-password-gate {
+    text-align: center;
+    padding: 20vh 16px 0;
+}
+.admin-password-gate input {
+    max-width: 260px;
+    margin: 10px auto;
+    display: block;
+    text-align: center;
+    font-size: 5vw;
+}
+.admin-password-gate button { margin-top: 10px; }
+.admin-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #444;
+}
+.admin-toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+.admin-edit-form {
+    background: #162447;
+    border: 1px solid #ffd700;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+}
+.admin-edit-form h3 { margin-top: 0; }
+.admin-msg {
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 3.5vw;
+}
+.admin-msg-success { background: #28a74533; color: #28a745; border: 1px solid #28a745; }
+.admin-msg-error { background: #cc333333; color: #cc3333; border: 1px solid #cc3333; }
 </style>
 </head>
 
@@ -155,10 +282,46 @@ button {
     <button onclick="pauseTimer()">Pause</button>
     <button onclick="nextQuestion()">Next</button>
     <button id="revealAllBtn" onclick="revealAll()">Reveal All</button>
+    <button onclick="openAdmin()" style="background:#cc3333;color:#fff;">Admin</button>
 </div>
 
 <div id="final"></div>
 
+</div>
+
+<!-- ADMIN PANEL OVERLAY -->
+<div class="admin-overlay" id="adminOverlay">
+    <div class="admin-panel">
+        <!-- Password Gate -->
+        <div id="adminPasswordGate" class="admin-password-gate">
+            <h2>ADMIN LOGIN</h2>
+            <p style="color:#aaa;font-size:3.5vw;">Enter the admin password to manage questions.</p>
+            <input type="password" id="adminPwdInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+            <br>
+            <button class="abtn-primary" onclick="checkAdminPassword()">Enter</button>
+            <button class="abtn-secondary" onclick="closeAdmin()">Cancel</button>
+            <div id="adminPwdError"></div>
+        </div>
+        <!-- Main Admin Content -->
+        <div id="adminContent" style="display:none;">
+            <h2>QUESTION MANAGER</h2>
+            <div id="adminMsg"></div>
+            <div class="admin-toolbar">
+                <div class="admin-toolbar-row">
+                    <button class="abtn-success" onclick="showAddForm()">+ Add New</button>
+                    <button class="abtn-danger" onclick="deleteAllQuestions()">Delete All</button>
+                    <button class="abtn-secondary" onclick="resetToDefaults()">Reset Defaults</button>
+                </div>
+                <div class="admin-toolbar-row">
+                    <button class="abtn-primary" onclick="saveAndClose()">Save &amp; Close</button>
+                    <button class="abtn-secondary" onclick="closeAdmin()">Cancel</button>
+                </div>
+            </div>
+            <div id="adminEditArea"></div>
+            <h3>Questions (<span id="adminQCount">0</span>)</h3>
+            <div id="adminQList"></div>
+        </div>
+    </div>
 </div>
 
 <!-- SOUNDS -->
@@ -170,9 +333,9 @@ button {
 /* =====================
    GAME DATA
    ===================== */
-const gameData = [
+const defaultGameData = [
 {
-  
+
         question: "Who is the Tarsier in the Family?",
         answers: [
             { text: "Tita Ella", points: 20, revealed: false },
@@ -360,6 +523,8 @@ const gameData = [
     }
 ];
 
+// Load from localStorage if saved, otherwise use defaults
+let gameData = JSON.parse(localStorage.getItem('familyFeudMobileQuestions')) || JSON.parse(JSON.stringify(defaultGameData));
 
 /* =====================
    GAME STATE
@@ -501,6 +666,207 @@ function pauseTimer() {
 $("guess").addEventListener("keydown", e => {
     if (e.key === "Enter") submitAnswer();
 });
+
+/* =====================
+   ADMIN PANEL
+   ===================== */
+const ADMIN_PASSWORD = "daddypepe1931";
+let adminAuthenticated = false;
+let adminEditData = [];
+
+function openAdmin() {
+    clearInterval(timer);
+    $("adminOverlay").classList.add("active");
+    $("adminPasswordGate").style.display = "block";
+    $("adminContent").style.display = "none";
+    $("adminPwdInput").value = "";
+    $("adminPwdError").innerHTML = "";
+    adminAuthenticated = false;
+    setTimeout(() => $("adminPwdInput").focus(), 100);
+}
+
+function closeAdmin() {
+    $("adminOverlay").classList.remove("active");
+    adminAuthenticated = false;
+    $("adminEditArea").innerHTML = "";
+    resetTimer();
+}
+
+function checkAdminPassword() {
+    const input = $("adminPwdInput").value;
+    if (input === ADMIN_PASSWORD) {
+        adminAuthenticated = true;
+        $("adminPasswordGate").style.display = "none";
+        $("adminContent").style.display = "block";
+        adminEditData = JSON.parse(JSON.stringify(gameData));
+        renderAdminList();
+    } else {
+        $("adminPwdError").innerHTML = '<div class="admin-msg admin-msg-error">Incorrect password.</div>';
+    }
+}
+
+function showAdminMsg(msg, type) {
+    const el = $("adminMsg");
+    el.innerHTML = '<div class="admin-msg admin-msg-' + type + '">' + msg + '</div>';
+    setTimeout(() => el.innerHTML = "", 3000);
+}
+
+function renderAdminList() {
+    $("adminQCount").innerText = adminEditData.length;
+    const list = $("adminQList");
+    list.innerHTML = "";
+    if (adminEditData.length === 0) {
+        list.innerHTML = '<p style="color:#aaa;text-align:center;font-size:3.5vw;">No questions yet. Tap "+ Add New" to get started.</p>';
+        return;
+    }
+    adminEditData.forEach((q, qi) => {
+        const card = document.createElement("div");
+        card.className = "admin-question-card";
+        let answersHtml = q.answers.map((a, ai) =>
+            '<div style="color:#ccc;font-size:3.2vw;margin-left:12px;">' +
+                (ai + 1) + '. ' + a.text + ' <span style="color:#ffd700;">(' + a.points + ' pts)</span>' +
+            '</div>'
+        ).join("");
+        card.innerHTML =
+            '<div class="q-header">' +
+                '<span>Q' + (qi + 1) + ': ' + q.question + '</span>' +
+                '<div style="display:flex;gap:4px;flex-shrink:0;">' +
+                    '<button class="abtn-primary" onclick="editQuestion(' + qi + ')" style="font-size:3vw;padding:6px 10px;">Edit</button>' +
+                    '<button class="abtn-danger" onclick="deleteQuestion(' + qi + ')" style="font-size:3vw;padding:6px 10px;">Del</button>' +
+                '</div>' +
+            '</div>' + answersHtml;
+        list.appendChild(card);
+    });
+}
+
+function showAddForm() { showEditForm(-1); }
+function editQuestion(index) { showEditForm(index); }
+
+function showEditForm(index) {
+    const isNew = index === -1;
+    const q = isNew ? { question: "", answers: [{ text: "", points: 0 }] } : JSON.parse(JSON.stringify(adminEditData[index]));
+    const area = $("adminEditArea");
+
+    function renderForm() {
+        let answersHtml = q.answers.map((a, ai) =>
+            '<div class="admin-answer-row">' +
+                '<input type="text" value="' + a.text.replace(/"/g, '&quot;') + '" placeholder="Answer text" id="aAnsT' + ai + '">' +
+                '<input type="number" value="' + a.points + '" placeholder="Pts" min="0" id="aAnsP' + ai + '">' +
+                '<button class="abtn-danger" onclick="adminRemoveAns(' + ai + ')" style="font-size:3vw;padding:6px 8px;"' + (q.answers.length <= 1 ? ' disabled' : '') + '>X</button>' +
+            '</div>'
+        ).join("");
+
+        area.innerHTML =
+            '<div class="admin-edit-form">' +
+                '<h3>' + (isNew ? "Add New Question" : "Edit Question") + '</h3>' +
+                '<label style="color:#aaa;font-size:3.2vw;">Question:</label>' +
+                '<input type="text" id="aQText" value="' + q.question.replace(/"/g, '&quot;') + '" placeholder="Enter the question">' +
+                '<label style="color:#aaa;font-size:3.2vw;margin-top:8px;display:block;">Answers:</label>' +
+                '<div id="aAnsList">' + answersHtml + '</div>' +
+                '<button class="abtn-secondary" onclick="adminAddAns()" style="margin-top:6px;font-size:3vw;">+ Add Answer</button>' +
+                '<div style="margin-top:12px;">' +
+                    '<button class="abtn-success" onclick="adminSaveQ(' + index + ')">Save Question</button>' +
+                    '<button class="abtn-secondary" onclick="document.getElementById(\'adminEditArea\').innerHTML=\'\';">Cancel</button>' +
+                '</div>' +
+            '</div>';
+    }
+
+    window._aeQ = q;
+    window._aeRender = renderForm;
+    renderForm();
+    $("aQText").focus();
+}
+
+function adminCollectAnswers() {
+    const q = window._aeQ;
+    const qTextEl = document.getElementById("aQText");
+    if (qTextEl) q.question = qTextEl.value;
+    q.answers.forEach((a, ai) => {
+        const t = document.getElementById("aAnsT" + ai);
+        const p = document.getElementById("aAnsP" + ai);
+        if (t) a.text = t.value;
+        if (p) a.points = parseInt(p.value) || 0;
+    });
+}
+
+function adminAddAns() {
+    adminCollectAnswers();
+    window._aeQ.answers.push({ text: "", points: 0 });
+    window._aeRender();
+    const newIdx = window._aeQ.answers.length - 1;
+    setTimeout(() => {
+        const el = document.getElementById("aAnsT" + newIdx);
+        if (el) el.focus();
+    }, 50);
+}
+
+function adminRemoveAns(ai) {
+    adminCollectAnswers();
+    window._aeQ.answers.splice(ai, 1);
+    window._aeRender();
+}
+
+function adminSaveQ(index) {
+    adminCollectAnswers();
+    const q = window._aeQ;
+    if (!q.question.trim()) { showAdminMsg("Question text cannot be empty.", "error"); return; }
+    q.answers = q.answers.filter(a => a.text.trim() !== "");
+    if (q.answers.length === 0) { showAdminMsg("You need at least one answer.", "error"); return; }
+    q.answers.forEach(a => a.revealed = false);
+    if (index === -1) {
+        adminEditData.push(q);
+        showAdminMsg("Question added!", "success");
+    } else {
+        adminEditData[index] = q;
+        showAdminMsg("Question updated!", "success");
+    }
+    $("adminEditArea").innerHTML = "";
+    renderAdminList();
+}
+
+function deleteQuestion(index) {
+    if (!confirm('Delete question "' + adminEditData[index].question + '"?')) return;
+    adminEditData.splice(index, 1);
+    showAdminMsg("Question deleted.", "success");
+    renderAdminList();
+}
+
+function deleteAllQuestions() {
+    if (!confirm("Delete ALL questions? This cannot be undone.")) return;
+    if (!confirm("Are you really sure? All questions will be removed.")) return;
+    adminEditData = [];
+    showAdminMsg("All questions deleted.", "success");
+    renderAdminList();
+}
+
+function resetToDefaults() {
+    if (!confirm("Reset all questions to the original defaults? Any custom questions will be lost.")) return;
+    adminEditData = JSON.parse(JSON.stringify(defaultGameData));
+    showAdminMsg("Questions reset to defaults.", "success");
+    renderAdminList();
+}
+
+function saveAndClose() {
+    gameData = JSON.parse(JSON.stringify(adminEditData));
+    gameData.forEach(q => q.answers.forEach(a => a.revealed = false));
+    localStorage.setItem('familyFeudMobileQuestions', JSON.stringify(gameData));
+
+    qIndex = 0;
+    currentTeam = "A";
+    strikes = { A: 0, B: 0 };
+    scores = { A: 0, B: 0 };
+    $("guess").disabled = false;
+    document.querySelectorAll("button").forEach(b => b.disabled = false);
+    $("final").textContent = "";
+
+    closeAdmin();
+    if (gameData.length > 0) {
+        loadQuestion();
+    } else {
+        $("question").textContent = "No questions loaded. Tap Admin to add questions.";
+        $("answers").innerHTML = "";
+    }
+}
 
 /* =====================
    START GAME
