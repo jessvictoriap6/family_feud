@@ -105,9 +105,12 @@ button {
 #controls {
     display: flex;
     gap: 4px;
-    flex-wrap: wrap;
 }
 
+#revealAllBtn {
+    background: #333; /* darker background */
+    color: white;
+}
 #final {
     text-align: center;
     font-size: 6vw;
@@ -144,7 +147,7 @@ button {
     <button onclick="switchTeam()">Switch</button>
     <button onclick="pauseTimer()">Pause</button>
     <button onclick="nextQuestion()">Next</button>
-    <button onclick="revealAll()">Reveal All</button>
+    <button id="revealAllBtn" onclick="revealAll()">Reveal All</button>
 </div>
 
 <div id="final"></div>
@@ -230,7 +233,6 @@ const gameData = [
     ]
 }
 ];
-
 
 /* =====================
    GAME STATE
