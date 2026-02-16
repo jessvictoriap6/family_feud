@@ -111,6 +111,132 @@ button {
   100% { background-color: #020d26; }
 }
 .win-background { animation: winBgFlash 1s infinite; }
+
+/* ========== ADMIN PANEL STYLES ========== */
+.admin-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 1000;
+    overflow-y: auto;
+}
+.admin-overlay.active { display: block; }
+.admin-panel {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 30px;
+    background: #1a1a2e;
+    border-radius: 16px;
+    border: 2px solid #ffd700;
+    font-family: Arial, sans-serif;
+}
+.admin-panel h2 {
+    color: #ffd700;
+    text-align: center;
+    margin-top: 0;
+    font-size: 28px;
+}
+.admin-panel h3 {
+    color: #ffcc00;
+    margin: 20px 0 10px;
+    font-size: 20px;
+}
+.admin-panel input, .admin-panel select {
+    font-size: 16px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #0f0f23;
+    color: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+}
+.admin-panel input:focus { outline: 2px solid #ffd700; }
+.admin-panel button {
+    font-size: 15px;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+.admin-btn-primary { background: #ffd700; color: #020d26; }
+.admin-btn-danger { background: #cc3333; color: #fff; }
+.admin-btn-secondary { background: #555; color: #fff; }
+.admin-btn-success { background: #28a745; color: #fff; }
+.admin-question-card {
+    background: #0f0f23;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+.admin-question-card .q-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.admin-question-card .q-header span {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 16px;
+    flex: 1;
+    margin-right: 10px;
+}
+.admin-answer-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+.admin-answer-row input { margin-bottom: 0; }
+.admin-answer-row input:first-child { flex: 3; }
+.admin-answer-row input:nth-child(2) { flex: 1; max-width: 100px; }
+.admin-answer-row button { flex-shrink: 0; }
+.admin-password-gate {
+    text-align: center;
+    padding: 60px 20px;
+}
+.admin-password-gate input {
+    max-width: 300px;
+    margin: 10px auto;
+    display: block;
+    text-align: center;
+}
+.admin-password-gate button {
+    margin-top: 10px;
+}
+.admin-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #444;
+}
+.admin-edit-form {
+    background: #162447;
+    border: 1px solid #ffd700;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.admin-edit-form h3 { margin-top: 0; }
+.admin-msg {
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+.admin-msg-success { background: #28a74533; color: #28a745; border: 1px solid #28a745; }
+.admin-msg-error { background: #cc333333; color: #cc3333; border: 1px solid #cc3333; }
 </style>
 </head>
 <body>
@@ -139,9 +265,47 @@ button {
         <button id="switchBtn" onclick="switchTeam()">Switch Team</button>
         <button id="nextBtn" onclick="nextQuestion()">Next Question</button>
         <button id="revealBtn" onclick="revealAll()">Reveal All</button>
+        <button id="adminBtn" onclick="openAdmin()" style="background:#cc3333;color:#fff;">Admin Panel</button>
     </div>
 
     <div class="final-result" id="finalResult"></div>
+</div>
+
+<!-- ADMIN PANEL OVERLAY -->
+<div class="admin-overlay" id="adminOverlay">
+    <div class="admin-panel">
+        <!-- Password Gate -->
+        <div id="adminPasswordGate" class="admin-password-gate">
+            <h2>ADMIN LOGIN</h2>
+            <p style="color:#aaa;">Enter the admin password to manage questions.</p>
+            <input type="password" id="adminPasswordInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+            <br>
+            <button class="admin-btn-primary" onclick="checkAdminPassword()">Enter</button>
+            <button class="admin-btn-secondary" onclick="closeAdmin()">Cancel</button>
+            <div id="adminPasswordError"></div>
+        </div>
+        <!-- Main Admin Content (hidden until authenticated) -->
+        <div id="adminContent" style="display:none;">
+            <h2>QUESTION MANAGER</h2>
+            <div id="adminMsg"></div>
+            <div class="admin-toolbar">
+                <div>
+                    <button class="admin-btn-success" onclick="showAddForm()">+ Add New Question</button>
+                    <button class="admin-btn-danger" onclick="deleteAllQuestions()">Delete All Questions</button>
+                    <button class="admin-btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                </div>
+                <div>
+                    <button class="admin-btn-primary" onclick="saveAndClose()">Save &amp; Close</button>
+                    <button class="admin-btn-secondary" onclick="closeAdmin()">Cancel</button>
+                </div>
+            </div>
+            <!-- Add/Edit Form Area -->
+            <div id="adminEditArea"></div>
+            <!-- Question List -->
+            <h3>Current Questions (<span id="adminQuestionCount">0</span>)</h3>
+            <div id="adminQuestionList"></div>
+        </div>
+    </div>
 </div>
 
 <!-- SOUND EFFECTS -->
@@ -151,7 +315,7 @@ button {
 <audio id="teamSwitchSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
 
 <script>
-const gameData = [
+const defaultGameData = [
 {
 
         question: "Who is the Tarsier in the Family?",
@@ -341,6 +505,9 @@ const gameData = [
     }
 ];
 
+// Load from localStorage if saved, otherwise use defaults
+let gameData = JSON.parse(localStorage.getItem('familyFeudQuestions')) || JSON.parse(JSON.stringify(defaultGameData));
+
 let currentQuestionIndex = 0;
 let currentTeam = "A";
 let strikes = {A:0, B:0};
@@ -508,6 +675,232 @@ function resetTimer(){
 function togglePause(){
     timerPaused = !timerPaused;
     document.getElementById("pauseBtn").innerText = timerPaused ? "Resume" : "Pause";
+}
+
+/* ========== ADMIN PANEL ========== */
+const ADMIN_PASSWORD = "daddypepe1931";
+let adminAuthenticated = false;
+let adminEditData = []; // working copy during admin session
+
+function openAdmin() {
+    clearInterval(timerInterval);
+    document.getElementById("adminOverlay").classList.add("active");
+    document.getElementById("adminPasswordGate").style.display = "block";
+    document.getElementById("adminContent").style.display = "none";
+    document.getElementById("adminPasswordInput").value = "";
+    document.getElementById("adminPasswordError").innerHTML = "";
+    adminAuthenticated = false;
+    setTimeout(() => document.getElementById("adminPasswordInput").focus(), 100);
+}
+
+function closeAdmin() {
+    document.getElementById("adminOverlay").classList.remove("active");
+    adminAuthenticated = false;
+    document.getElementById("adminEditArea").innerHTML = "";
+    resetTimer();
+}
+
+function checkAdminPassword() {
+    const input = document.getElementById("adminPasswordInput").value;
+    if (input === ADMIN_PASSWORD) {
+        adminAuthenticated = true;
+        document.getElementById("adminPasswordGate").style.display = "none";
+        document.getElementById("adminContent").style.display = "block";
+        adminEditData = JSON.parse(JSON.stringify(gameData));
+        renderAdminQuestionList();
+    } else {
+        document.getElementById("adminPasswordError").innerHTML =
+            '<div class="admin-msg admin-msg-error">Incorrect password.</div>';
+    }
+}
+
+function showAdminMsg(msg, type) {
+    const el = document.getElementById("adminMsg");
+    el.innerHTML = `<div class="admin-msg admin-msg-${type}">${msg}</div>`;
+    setTimeout(() => el.innerHTML = "", 3000);
+}
+
+function renderAdminQuestionList() {
+    document.getElementById("adminQuestionCount").innerText = adminEditData.length;
+    const list = document.getElementById("adminQuestionList");
+    list.innerHTML = "";
+    if (adminEditData.length === 0) {
+        list.innerHTML = '<p style="color:#aaa;text-align:center;">No questions yet. Click "+ Add New Question" to get started.</p>';
+        return;
+    }
+    adminEditData.forEach((q, qi) => {
+        const card = document.createElement("div");
+        card.className = "admin-question-card";
+        let answersHtml = q.answers.map((a, ai) =>
+            `<div style="color:#ccc;font-size:14px;margin-left:16px;">
+                ${ai + 1}. ${a.text} <span style="color:#ffd700;">(${a.points} pts)</span>
+            </div>`
+        ).join("");
+        card.innerHTML = `
+            <div class="q-header">
+                <span>Q${qi + 1}: ${q.question}</span>
+                <div>
+                    <button class="admin-btn-primary" onclick="editQuestion(${qi})" style="font-size:13px;">Edit</button>
+                    <button class="admin-btn-danger" onclick="deleteQuestion(${qi})" style="font-size:13px;">Delete</button>
+                </div>
+            </div>
+            ${answersHtml}
+        `;
+        list.appendChild(card);
+    });
+}
+
+function showAddForm() {
+    showEditForm(-1);
+}
+
+function editQuestion(index) {
+    showEditForm(index);
+}
+
+function showEditForm(index) {
+    const isNew = index === -1;
+    const q = isNew ? { question: "", answers: [{ text: "", points: 0 }] } : JSON.parse(JSON.stringify(adminEditData[index]));
+    const area = document.getElementById("adminEditArea");
+
+    function renderForm() {
+        let answersHtml = q.answers.map((a, ai) => `
+            <div class="admin-answer-row">
+                <input type="text" value="${a.text.replace(/"/g, '&quot;')}" placeholder="Answer text"
+                    onchange="this.dataset.val=this.value" data-val="${a.text.replace(/"/g, '&quot;')}" id="adminAnsText${ai}">
+                <input type="number" value="${a.points}" placeholder="Points" min="0"
+                    onchange="this.dataset.val=this.value" data-val="${a.points}" id="adminAnsPts${ai}">
+                <button class="admin-btn-danger" onclick="adminRemoveAnswer(${ai})" style="font-size:12px;padding:6px 10px;" ${q.answers.length <= 1 ? 'disabled' : ''}>X</button>
+            </div>
+        `).join("");
+
+        area.innerHTML = `
+            <div class="admin-edit-form">
+                <h3>${isNew ? "Add New Question" : "Edit Question"}</h3>
+                <label style="color:#aaa;font-size:14px;">Question:</label>
+                <input type="text" id="adminQuestionText" value="${q.question.replace(/"/g, '&quot;')}" placeholder="Enter the question">
+                <label style="color:#aaa;font-size:14px;margin-top:10px;display:block;">Answers:</label>
+                <div id="adminAnswersList">${answersHtml}</div>
+                <button class="admin-btn-secondary" onclick="adminAddAnswer()" style="margin-top:8px;font-size:13px;">+ Add Answer</button>
+                <div style="margin-top:15px;">
+                    <button class="admin-btn-success" onclick="adminSaveQuestion(${index})">Save Question</button>
+                    <button class="admin-btn-secondary" onclick="document.getElementById('adminEditArea').innerHTML='';">Cancel</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Store q on window so helper functions can access it
+    window._adminEditQ = q;
+    window._adminEditRender = renderForm;
+    renderForm();
+    document.getElementById("adminQuestionText").focus();
+}
+
+function adminCollectCurrentAnswers() {
+    const q = window._adminEditQ;
+    // Read current values from DOM back into q
+    q.question = document.getElementById("adminQuestionText").value;
+    q.answers.forEach((a, ai) => {
+        const textEl = document.getElementById("adminAnsText" + ai);
+        const ptsEl = document.getElementById("adminAnsPts" + ai);
+        if (textEl) a.text = textEl.value;
+        if (ptsEl) a.points = parseInt(ptsEl.value) || 0;
+    });
+}
+
+function adminAddAnswer() {
+    adminCollectCurrentAnswers();
+    window._adminEditQ.answers.push({ text: "", points: 0 });
+    window._adminEditRender();
+    // Focus the new answer field
+    const newIdx = window._adminEditQ.answers.length - 1;
+    setTimeout(() => {
+        const el = document.getElementById("adminAnsText" + newIdx);
+        if (el) el.focus();
+    }, 50);
+}
+
+function adminRemoveAnswer(ai) {
+    adminCollectCurrentAnswers();
+    window._adminEditQ.answers.splice(ai, 1);
+    window._adminEditRender();
+}
+
+function adminSaveQuestion(index) {
+    adminCollectCurrentAnswers();
+    const q = window._adminEditQ;
+
+    // Validate
+    if (!q.question.trim()) {
+        showAdminMsg("Question text cannot be empty.", "error");
+        return;
+    }
+    // Remove empty answers
+    q.answers = q.answers.filter(a => a.text.trim() !== "");
+    if (q.answers.length === 0) {
+        showAdminMsg("You need at least one answer.", "error");
+        return;
+    }
+    // Add revealed:false to all answers
+    q.answers.forEach(a => a.revealed = false);
+
+    if (index === -1) {
+        adminEditData.push(q);
+        showAdminMsg("Question added!", "success");
+    } else {
+        adminEditData[index] = q;
+        showAdminMsg("Question updated!", "success");
+    }
+    document.getElementById("adminEditArea").innerHTML = "";
+    renderAdminQuestionList();
+}
+
+function deleteQuestion(index) {
+    if (!confirm(`Delete question "${adminEditData[index].question}"?`)) return;
+    adminEditData.splice(index, 1);
+    showAdminMsg("Question deleted.", "success");
+    renderAdminQuestionList();
+}
+
+function deleteAllQuestions() {
+    if (!confirm("Delete ALL questions? This cannot be undone.")) return;
+    if (!confirm("Are you really sure? All questions will be removed.")) return;
+    adminEditData = [];
+    showAdminMsg("All questions deleted.", "success");
+    renderAdminQuestionList();
+}
+
+function resetToDefaults() {
+    if (!confirm("Reset all questions to the original defaults? Any custom questions will be lost.")) return;
+    adminEditData = JSON.parse(JSON.stringify(defaultGameData));
+    showAdminMsg("Questions reset to defaults.", "success");
+    renderAdminQuestionList();
+}
+
+function saveAndClose() {
+    // Commit adminEditData to gameData and localStorage
+    gameData = JSON.parse(JSON.stringify(adminEditData));
+    gameData.forEach(q => q.answers.forEach(a => a.revealed = false));
+    localStorage.setItem('familyFeudQuestions', JSON.stringify(gameData));
+
+    // Reset game state
+    currentQuestionIndex = 0;
+    currentTeam = "A";
+    strikes = { A: 0, B: 0 };
+    teamPoints = { A: 0, B: 0 };
+    document.getElementById("guessInput").disabled = false;
+    document.querySelectorAll("button").forEach(b => b.disabled = false);
+    document.getElementById("finalResult").innerText = "";
+    document.body.classList.remove("win-background");
+
+    closeAdmin();
+    if (gameData.length > 0) {
+        loadQuestion();
+    } else {
+        document.getElementById("question").innerText = "No questions loaded. Open Admin Panel to add questions.";
+        document.getElementById("answers").innerHTML = "";
+    }
 }
 
 loadQuestion();
