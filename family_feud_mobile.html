@@ -13,7 +13,7 @@ html, body {
     background: #02122e;
     color: white;
     font-family: Arial Black, sans-serif;
-    overflow: hidden; /* NO SCROLL */
+    overflow: hidden;
 }
 
 #app {
@@ -34,7 +34,6 @@ h1 {
 #scores {
     text-align: center;
     font-size: 4vw;
-    margin-bottom: 4px;
 }
 
 #question {
@@ -69,11 +68,9 @@ h1 {
     display: flex;
     justify-content: space-between;
     font-size: 4vw;
-    margin: 4px 0;
 }
 
 #timer {
-    text-align: center;
     font-size: 6vw;
     color: #ff5252;
 }
@@ -82,7 +79,6 @@ h1 {
     display: flex;
     justify-content: space-around;
     font-size: 7vw;
-    margin: 4px 0;
 }
 
 #inputArea {
@@ -109,14 +105,12 @@ button {
 #controls {
     display: flex;
     gap: 4px;
-    margin-top: 4px;
 }
 
 #final {
     text-align: center;
     font-size: 6vw;
     color: #00e676;
-    margin-top: 6px;
 }
 </style>
 </head>
@@ -163,304 +157,185 @@ button {
 <audio id="buzz" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
 
 <script>
-const data = [
-  
+/* =====================
+   CONSISTENT GAME DATA
+   ===================== */
+const gameData = [
 {
-        question: "Who is the Tarsier in the Family?",
-        answers: [
-            { text: "Tita Ella", points: 20, revealed: false },
-            { text: "Ate Anne", points: 12, revealed: false },
-            { text: "Dr Joy", points: 8, revealed: false },
-            { text: "Mommy Nene", points: 6, revealed: false },
-            { text: "Judge Grace", points: 5, revealed: false },
-	    { text: "Ninang Glo", points: 4, revealed: false },
-            { text: "Bastik", points: 2, revealed: false },
-            { text: "All Girls", points: 1, revealed: false }
-        ]
-    },
+    question: "Who is the Tarsier in the Family?",
+    answers: [
+        { text: "Tita Ella", points: 20, revealed: false },
+        { text: "Ate Anne", points: 12, revealed: false },
+        { text: "Dr Joy", points: 8, revealed: false },
+        { text: "Mommy Nene", points: 6, revealed: false },
+        { text: "Judge Grace", points: 5, revealed: false },
+        { text: "Ninang Glo", points: 4, revealed: false },
+        { text: "Bastik", points: 2, revealed: false },
+        { text: "All Girls", points: 1, revealed: false }
+    ]
+},
 {
-        question: "Who is the Quietest member?",
-        answers: [
-            { text: "Tito Adows", points: 15, revealed: false },
-            { text: "Tito Basil", points: 12, revealed: false },
-            { text: "None", points: 8, revealed: false },
-            { text: "Tito Mon", points: 6, revealed: false },
-            { text: "Vincent", points: 4, revealed: false },
-	    { text: "Nina", points: 3, revealed: false },
-	    { text: "Moana", points: 2, revealed: false },
-	   
-        ]
-    },
+    question: "Who is the Quietest member?",
+    answers: [
+        { text: "Tito Adows", points: 15, revealed: false },
+        { text: "Tito Basil", points: 12, revealed: false },
+        { text: "None", points: 8, revealed: false },
+        { text: "Tito Mon", points: 6, revealed: false },
+        { text: "Vincent", points: 4, revealed: false },
+        { text: "Nina", points: 3, revealed: false },
+        { text: "Moana", points: 2, revealed: false }
+    ]
+},
 {
-        question: "Name a phrase or expression that Daddy Pepe is famous for saying.",
-        answers: [
-            { text: "whatever!", points: 20, revealed: false },
-            { text: "my pabs", points: 16, revealed: false },
-            { text: "ha! Ha!", points: 12, revealed: false },
-            { text: "consistent lang", points: 7, revealed: false },
-            { text: "Isa pa. pang delete", points: 5, revealed: false },
-	    { text: "Love, Daddy Pepe", points: 5, revealed: false },
-	    { text: "No Problem!", points: 3, revealed: false }
- 
-        ]
-    },
-
+    question: "Name a phrase or expression that Daddy Pepe is famous for saying.",
+    answers: [
+        { text: "whatever", points: 20, revealed: false },
+        { text: "my pabs", points: 16, revealed: false },
+        { text: "ha ha", points: 12, revealed: false },
+        { text: "consistent lang", points: 7, revealed: false },
+        { text: "isa pa pang delete", points: 5, revealed: false },
+        { text: "love daddy pepe", points: 5, revealed: false },
+        { text: "no problem", points: 3, revealed: false }
+    ]
+},
 {
-        question: "Name one Famous Song which is special to the Victoria Family",
-        answers: [
-            { text: "L-O-V-E", points: 20, revealed: false },
-            { text: "Angelina", points: 18, revealed: false },
-            { text: "My Girl/Dad", points: 14, revealed: false },
-            { text: "I want it that way", points: 10, revealed: false },
-            { text: "An Affair to Remember/A love Affair", points: 8, revealed: false },
-	    { text: "Tanging Yaman", points: 6, revealed: false },
-	    { text: "Sound of Music", points: 4, revealed: false }
-	   
-        ]
-    },
+    question: "Name one Famous Song which is special to the Victoria Family",
+    answers: [
+        { text: "l-o-v-e", points: 20, revealed: false },
+        { text: "angelina", points: 18, revealed: false },
+        { text: "my girl", points: 14, revealed: false },
+        { text: "i want it that way", points: 10, revealed: false },
+        { text: "an affair to remember", points: 8, revealed: false },
+        { text: "tanging yaman", points: 6, revealed: false },
+        { text: "sound of music", points: 4, revealed: false }
+    ]
+},
 {
-        question: "Name One Skill that the Victoria Family will win a gold medal in?",
-        answers: [
-            { text: "Cooking", points: 15, revealed: false },
-            { text: "Dancing", points: 10, revealed: false },
-            { text: "Eating", points: 9, revealed: false },
-            { text: "Debating", points: 7, revealed: false },
-            { text: "Bashing", points: 5, revealed: false },
-	    { text: "Singing", points: 3, revealed: false },
-	    { text: "Best Dressed/Dressing Up", points: 2, revealed: false }
-
-        ]
-    },
+    question: "Who is the official photographer of the family?",
+    answers: [
+        { text: "Tita Ella", points: 17, revealed: false },
+        { text: "Tito Ben", points: 12, revealed: false },
+        { text: "Tita Bong", points: 10, revealed: false },
+        { text: "Dr Joy", points: 8, revealed: false },
+        { text: "Tito Jess", points: 6, revealed: false },
+        { text: "Justin", points: 4, revealed: false }
+    ]
+},
 {
-        question: "Name a food that is always present at our family gatherings",
-        answers: [
-            { text: "Fried Chicken", points: 20, revealed: false },
-            { text: "Rice", points: 15, revealed: false },
-            { text: "Kare-Kare", points: 13, revealed: false },
-            { text: "Paes/Fish", points: 11, revealed: false },
-            { text: "Longganisa", points: 10, revealed: false },
-	    { text: "Menudo", points: 8, revealed: false },
-	    { text: "Lechon", points: 7, revealed: false }
-	   
-        ]
-    },
-{
-        question: "Name one item that can be found in Daddy Pepe's house.",
-        answers: [
-            { text: "pieta", points: 21, revealed: false },
-            { text: "pictures", points: 16, revealed: false },
-            { text: "rocking chair", points: 8, revealed: false },
-            { text: "back scratcher/pangkamot", points: 4, revealed: false },
-            { text: "hospital bed", points: 4, revealed: false },
- 	    { text: "hats", points: 3, revealed: false }
-        ]
-    },
-{
-        question: "Name a reason why a family gathering might go past midnight?",
-        answers: [
-            { text: "Stories/Chikahan", points: 12, revealed: false },
-            { text: "Drinks/Inuman", points: 10, revealed: false },
-            { text: "Karaoke/Videoke", points: 8, revealed: false },
-            { text: "Movies/Netflix/Horror Movies", points: 6, revealed: false },
-            { text: "Board Games", points: 5, revealed: false },
-	    { text: "Food", points: 4, revealed: false }
-	    
-        ]
-    },
-{
-        question: "If the Family started a singing group, who would be the lead singer?",
-        answers: [
-            { text: "Tita Bong", points: 12, revealed: false },
-            { text: "Korina", points: 10, revealed: false },
-            { text: "Dr Joy", points: 8, revealed: false },
-            { text: "Ate Anne", points: 6, revealed: false },
-            { text: "Aimee", points: 6, revealed: false },
-	    { text: "Amanda", points: 6, revealed: false }
-	  
-        ]
-    },
-{
-        question: "Who is the "official photographer" of the family?",
-        answers: [
-            { text: "Tita Ella", points: 17, revealed: false },
-            { text: "Tito Ben", points: 12, revealed: false },
-            { text: "Tita Bong", points: 10, revealed: false },
-            { text: "Dr Joy", points: 8, revealed: false },
-            { text: "Tito Jess", points: 6, revealed: false },
-	    { text: "Justin", points: 4, revealed: false }
-	   
-        ]
-    },
-{
-        question: "Which family member is most likely to start a Karaoke session?",
-        answers: [
-            { text: "Tita Bong", points: 20, revealed: false },
-            { text: "Korina/Jenny", points: 18, revealed: false },
-            { text: "Aimee", points: 8, revealed: false },
-            { text: "Tita May", points: 6, revealed: false },
-            { text: "Ryanne", points: 4, revealed: false }
-	
-        ]
-    },
-{
-        question: "Name a specific gift or pasalubong you'd expect from a family member coming home from abroad?",
-        answers: [
-            { text: "chocolates", points: 14, revealed: false },
-            { text: "keychain", points: 10, revealed: false },
-            { text: "magnet", points: 8, revealed: false },
-            { text: "vitamins", points: 6, revealed: false },
-            { text: "ziplock/cling wrap", points: 4, revealed: false }
-        ]
-    },
-{
-        question: "what is the most common/classic profession within the Victoria family?",
-        answers: [
-            { text: "Teacher/Education", points: 20, revealed: false },
-            { text: "Lawyer/Law", points: 15, revealed: false },
-            { text: "Accountant/Accounting", points: 10, revealed: false },
-            { text: "Government/Civil Service", points: 6, revealed: false }
-           
-        ]
-    },
-{
-        question: "Name the family member who is most likely to win a debate or argument.",
-        answers: [
-            { text: "Judge Grace", points: 14, revealed: false },
-            { text: "Tito Jess", points: 13, revealed: false },
-            { text: "Atty Glo", points: 8, revealed: false },
-            { text: "Atty Kix", points: 7, revealed: false }
-         
-        ]
-    },
-{
-        question: "What is the one thing which a family member living abroad misses the most?",
-        answers: [
-            { text: "Food/Kainan", points: 20, revealed: false },
-            { text: "Family/Bonding", points: 18, revealed: false },
-            { text: "Christmas", points: 15, revealed: false }
-   
-        ]
-    },
-{
-        question: "Who is the funniest family member?",
-        answers: [
-            { text: "Kix/Kiko/Francis", points: 10, revealed: false },
-            { text: "Jess", points: 10, revealed: false },
-            { text: "Jovy", points: 5, revealed: false }
-        ]
-    },
-{
-        question: "Who is the family "tech support' - the person everyone goes to when their phone or wifi isn't working?",
-        answers: [
-            { text: "Tito Jess", points: 12, revealed: false },
-            { text: "Justin", points: 10, revealed: false },
-            { text: "Jewel", points: 8, revealed: false }
-           
-        ]
-    },
-{
-        question: "Name a country, other than the Philippines, where many of our relatives live.",
-        answers: [
-            { text: "Canada", points: 15, revealed: false },
-            { text: "Australia", points: 12, revealed: false }
-  
-        ]
-    }
+    question: "Who is the family tech support - the person everyone goes to when their phone or wifi is not working?",
+    answers: [
+        { text: "Tito Jess", points: 12, revealed: false },
+        { text: "Justin", points: 10, revealed: false },
+        { text: "Jewel", points: 8, revealed: false }
+    ]
+}
 ];
 
-let qi = 0;
-let team = "A";
-let points = {A:0,B:0};
-let strikes = {A:0,B:0};
+
+let qIndex = 0;
+let currentTeam = "A";
+let scores = { A: 0, B: 0 };
+let strikes = { A: 0, B: 0 };
 let time = 30;
 let timer;
 let paused = false;
 
 const $ = id => document.getElementById(id);
 
-function loadQ(){
-  data[qi].a.forEach(x=>x.r=false);
-  strikes={A:0,B:0};
-  render();
-  resetTimer();
+function loadQuestion() {
+    gameData[qIndex].answers.forEach(a => a.revealed = false);
+    strikes = { A: 0, B: 0 };
+    render();
+    resetTimer();
 }
 
-function render(){
-  $("scores").textContent = `Team A: ${points.A} | Team B: ${points.B}`;
-  $("question").textContent = data[qi].q;
-  $("currentTeam").textContent = `Team ${team}`;
-  $("answers").innerHTML = data[qi].a.map(x =>
-    `<div class="answer ${x.r?'revealed':''}">
-      ${x.r ? x.t.toUpperCase()+" "+x.p : "____"}
-     </div>`).join("");
-  $("strikesA").textContent = "❌".repeat(strikes.A);
-  $("strikesB").textContent = "❌".repeat(strikes.B);
+function render() {
+    $("scores").textContent = `Team A: ${scores.A} | Team B: ${scores.B}`;
+    $("question").textContent = gameData[qIndex].question;
+    $("currentTeam").textContent = `Team ${currentTeam}`;
+
+    $("answers").innerHTML = gameData[qIndex].answers.map(a =>
+        `<div class="answer ${a.revealed ? 'revealed' : ''}">
+            ${a.revealed ? a.text.toUpperCase() + " " + a.points : "____"}
+        </div>`
+    ).join("");
+
+    $("strikesA").textContent = "❌".repeat(strikes.A);
+    $("strikesB").textContent = "❌".repeat(strikes.B);
 }
 
-function submitAnswer(){
-  resetTimer();
-  let g = $("guess").value.toLowerCase().trim();
-  $("guess").value="";
-  if(!g) return;
+function submitAnswer() {
+    resetTimer();
+    const guess = $("guess").value.toLowerCase().trim();
+    $("guess").value = "";
+    if (!guess) return;
 
-  let match = data[qi].a.find(x=>!x.r && x.t.includes(g));
-  if(match){
-    match.r=true;
-    points[team]+=match.p;
-    $("correct").play();
-  }else{
-    strikes[team]++;
-    $("wrong").play();
-    if(strikes[team]>=3) switchTeam();
-  }
-  render();
-}
+    const match = gameData[qIndex].answers
+        .find(a => !a.revealed && a.text.includes(guess));
 
-function switchTeam(){
-  team = team==="A"?"B":"A";
-  $("buzz").play();
-  resetTimer();
-  render();
-}
-
-function nextQuestion(){
-  qi++;
-  if(qi>=data.length){
-    clearInterval(timer);
-    $("final").textContent =
-      points.A>points.B ? "TEAM A WINS!" :
-      points.B>points.A ? "TEAM B WINS!" : "IT'S A TIE!";
-    document.querySelectorAll("button,input").forEach(x=>x.disabled=true);
-    return;
-  }
-  loadQ();
-}
-
-function startTimer(){
-  clearInterval(timer);
-  time=30;
-  $("timer").textContent=time;
-  timer=setInterval(()=>{
-    if(!paused){
-      time--;
-      $("timer").textContent=time;
-      if(time<=0){
-        clearInterval(timer);
-        strikes[team]++;
-        switchTeam();
-      }
+    if (match) {
+        match.revealed = true;
+        scores[currentTeam] += match.points;
+        $("correct").play();
+    } else {
+        strikes[currentTeam]++;
+        $("wrong").play();
+        if (strikes[currentTeam] >= 3) switchTeam();
     }
-  },1000);
+    render();
 }
 
-function resetTimer(){ paused=false; startTimer(); }
-function pauseTimer(){ paused=!paused; }
+function switchTeam() {
+    currentTeam = currentTeam === "A" ? "B" : "A";
+    $("buzz").play();
+    resetTimer();
+    render();
+}
 
-$("guess").addEventListener("keydown",e=>{
-  if(e.key==="Enter") submitAnswer();
+function nextQuestion() {
+    qIndex++;
+    if (qIndex >= gameData.length) {
+        clearInterval(timer);
+        $("final").textContent =
+            scores.A > scores.B ? "TEAM A WINS!" :
+            scores.B > scores.A ? "TEAM B WINS!" : "IT'S A TIE!";
+        document.querySelectorAll("button,input").forEach(e => e.disabled = true);
+        return;
+    }
+    loadQuestion();
+}
+
+function startTimer() {
+    clearInterval(timer);
+    time = 30;
+    $("timer").textContent = time;
+    timer = setInterval(() => {
+        if (!paused) {
+            time--;
+            $("timer").textContent = time;
+            if (time <= 0) {
+                clearInterval(timer);
+                strikes[currentTeam]++;
+                switchTeam();
+            }
+        }
+    }, 1000);
+}
+
+function resetTimer() {
+    paused = false;
+    startTimer();
+}
+
+function pauseTimer() {
+    paused = !paused;
+}
+
+$("guess").addEventListener("keydown", e => {
+    if (e.key === "Enter") submitAnswer();
 });
 
-loadQ();
+loadQuestion();
 </script>
 </body>
 </html>
