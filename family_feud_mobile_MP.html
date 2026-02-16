@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Family Feud – Multiplayer (Mobile)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+    background: #02122e;
+    color: white;
+    font-family: Arial Black, sans-serif;
+    overflow: hidden;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+h1 {
+    text-align: center;
+    color: gold;
+    font-size: 6vw;
+    margin: 4px 0;
+}
+
+#scores {
+    text-align: center;
+    font-size: 4vw;
+}
+
+#question {
+    text-align: center;
+    font-size: 4.5vw;
+    margin: 6px 0;
+}
+
+#answers {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.answer {
+    background: gold;
+    color: #02122e;
+    border-radius: 8px;
+    padding: 6px;
+    font-size: 4vw;
+    font-weight: bold;
+    text-align: center;
+}
+
+.answer.revealed {
+    background: #00c853;
+    color: white;
+}
+
+#status {
+    display: flex;
+    justify-content: space-between;
+    font-size: 4vw;
+}
+
+#timer {
+    font-size: 6vw;
+    color: #ff5252;
+}
+
+#strikes {
+    display: flex;
+    justify-content: space-around;
+    font-size: 7vw;
+}
+
+#inputArea {
+    display: flex;
+    gap: 4px;
+}
+
+input {
+    flex: 1;
+    font-size: 4vw;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+}
+
+button {
+    font-size: 4vw;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    font-weight: bold;
+}
+
+button:disabled {
+    opacity: 0.4;
+}
+
+#controls {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+#controls button {
+    flex: 1;
+}
+
+#revealAllBtn {
+    background: #333;
+    color: white;
+}
+
+#final {
+    text-align: center;
+    font-size: 6vw;
+    color: #00e676;
+}
+
+/* ========== TURN INDICATORS ========== */
+.your-turn-glow { color: #00ff00; text-shadow: 0 0 8px #00ff00; }
+.waiting-turn { color: #ff5555; }
+.team-badge {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-size: 3vw;
+    text-align: center;
+}
+.team-badge-a { background: #2196F3; }
+.team-badge-b { background: #ff9800; }
+.conn-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+.conn-ok { background: #00ff00; }
+.conn-off { background: #ff5555; }
+.conn-wait { background: #ffd700; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0.3; } }
+
+/* ========== LOBBY ========== */
+#lobby {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    text-align: center;
+}
+#lobby h2 { color: #ffd700; font-size: 5vw; margin: 8px 0; }
+#lobby p { font-size: 3.5vw; color: #ccc; margin: 4px 0; }
+#lobby input {
+    font-size: 5vw;
+    padding: 10px;
+    width: 80%;
+    text-align: center;
+    border-radius: 10px;
+    border: 2px solid #ffd700;
+    background: #0f0f23;
+    color: #fff;
+    margin: 8px 0;
+}
+#lobby button {
+    font-size: 4.5vw;
+    padding: 10px 24px;
+    margin: 6px;
+}
+.room-code {
+    font-size: 8vw;
+    color: #00ff00;
+    letter-spacing: 6px;
+    font-weight: bold;
+    padding: 10px 20px;
+    background: #0f0f23;
+    border-radius: 10px;
+    display: inline-block;
+    margin: 10px 0;
+    user-select: all;
+    border: 2px solid #00ff00;
+}
+.lobby-status { font-size: 3.5vw; color: #ffd700; margin: 10px 0; }
+.lobby-error { color: #ff5555; font-size: 3.5vw; }
+
+/* ========== ADMIN PANEL STYLES (MOBILE) ========== */
+.admin-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 1000;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.admin-overlay.active { display: block; }
+.admin-panel {
+    padding: 16px;
+    font-family: Arial, sans-serif;
+    min-height: 100%;
+}
+.admin-panel h2 {
+    color: #ffd700;
+    text-align: center;
+    margin: 8px 0 16px;
+    font-size: 5.5vw;
+}
+.admin-panel h3 {
+    color: #ffcc00;
+    margin: 14px 0 8px;
+    font-size: 4.5vw;
+}
+.admin-panel input, .admin-panel select {
+    font-size: 4vw;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background: #0f0f23;
+    color: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+}
+.admin-panel input:focus { outline: 2px solid #ffd700; }
+.admin-panel button {
+    font-size: 3.8vw;
+    padding: 10px 14px;
+    margin: 4px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+.abtn-primary { background: #ffd700; color: #020d26; }
+.abtn-danger { background: #cc3333; color: #fff; }
+.abtn-secondary { background: #555; color: #fff; }
+.abtn-success { background: #28a745; color: #fff; }
+.admin-question-card {
+    background: #0f0f23;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+.admin-question-card .q-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.admin-question-card .q-header span {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 3.8vw;
+    flex: 1;
+}
+.admin-answer-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 5px;
+}
+.admin-answer-row input { margin-bottom: 0; }
+.admin-answer-row input:first-child { flex: 3; }
+.admin-answer-row input:nth-child(2) { flex: 1; max-width: 80px; }
+.admin-answer-row button { flex-shrink: 0; padding: 8px 10px; }
+.admin-password-gate {
+    text-align: center;
+    padding: 20vh 16px 0;
+}
+.admin-password-gate input {
+    max-width: 260px;
+    margin: 10px auto;
+    display: block;
+    text-align: center;
+    font-size: 5vw;
+}
+.admin-password-gate button { margin-top: 10px; }
+.admin-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #444;
+}
+.admin-toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+.admin-edit-form {
+    background: #162447;
+    border: 1px solid #ffd700;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+}
+.admin-edit-form h3 { margin-top: 0; }
+.admin-msg {
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 3.5vw;
+}
+.admin-msg-success { background: #28a74533; color: #28a745; border: 1px solid #28a745; }
+.admin-msg-error { background: #cc333333; color: #cc3333; border: 1px solid #cc3333; }
+</style>
+</head>
+
+<body>
+
+<!-- =============== LOBBY =============== -->
+<div id="lobby">
+    <h1>FAMILY FEUD</h1>
+    <h2>MULTIPLAYER</h2>
+    <p>Play head-to-head on two phones!</p>
+
+    <div id="lobbyMenu">
+        <button onclick="createRoom()">Create Room (Team A)</button>
+        <br>
+        <button onclick="showJoin()">Join Room (Team B)</button>
+        <br>
+        <button onclick="openAdmin()" style="background:#cc3333;color:#fff;font-size:3.5vw;margin-top:10px;">Admin</button>
+    </div>
+
+    <div id="lobbyHost" style="display:none;">
+        <p>Share this code:</p>
+        <div class="room-code" id="roomCode">-----</div>
+        <br>
+        <button onclick="copyRoomCode()" style="font-size:3.5vw;background:#28a745;color:#fff;">Copy Code</button>
+        <div class="lobby-status" id="hostStatus">
+            <span class="conn-dot conn-wait"></span> Waiting for opponent...
+        </div>
+    </div>
+
+    <div id="lobbyJoin" style="display:none;">
+        <p>Enter room code:</p>
+        <input id="joinCodeInput" placeholder="Room code" maxlength="8" onkeydown="if(event.key==='Enter')joinRoom()">
+        <br>
+        <button onclick="joinRoom()">Join</button>
+        <button onclick="backToMenu()" style="background:#555;color:#fff;">Back</button>
+        <div class="lobby-status" id="joinStatus"></div>
+    </div>
+</div>
+
+<!-- =============== GAME =============== -->
+<div id="app" style="display:none;">
+
+<h1>FAMILY FEUD <span style="font-size:0.4em;color:#00ff00;">MP</span></h1>
+
+<div style="text-align:center;">
+    <span class="team-badge" id="myTeamBadge"></span>
+    <span class="conn-dot conn-ok" id="connDot"></span>
+</div>
+
+<div id="scores">Team A: 0 | Team B: 0</div>
+<div id="question"></div>
+<div id="answers"></div>
+
+<div id="status">
+    <div id="currentTeam"></div>
+    <div id="timer">30</div>
+</div>
+
+<div id="strikes">
+    <div>🅰️ <span id="strikesA"></span></div>
+    <div>🅱️ <span id="strikesB"></span></div>
+</div>
+
+<div id="inputArea">
+    <input id="guess" placeholder="Enter answer">
+    <button onclick="submitAnswer()">OK</button>
+</div>
+
+<div id="controls">
+    <button id="switchBtn" onclick="switchTeam()">Switch</button>
+    <button onclick="pauseTimer()">Pause</button>
+    <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    <button id="revealAllBtn" onclick="revealAll()">Reveal</button>
+    <button id="adminBtn" onclick="openAdmin()" style="background:#cc3333;color:#fff;">Admin</button>
+</div>
+
+<div id="final"></div>
+
+</div>
+
+<!-- ADMIN PANEL OVERLAY -->
+<div class="admin-overlay" id="adminOverlay">
+    <div class="admin-panel">
+        <div id="adminPasswordGate" class="admin-password-gate">
+            <h2>ADMIN LOGIN</h2>
+            <p style="color:#aaa;font-size:3.5vw;">Enter the admin password to manage questions.</p>
+            <input type="password" id="adminPwdInput" placeholder="Password" onkeydown="if(event.key==='Enter')checkAdminPassword()">
+            <br>
+            <button class="abtn-primary" onclick="checkAdminPassword()">Enter</button>
+            <button class="abtn-secondary" onclick="closeAdmin()">Cancel</button>
+            <div id="adminPwdError"></div>
+        </div>
+        <div id="adminContent" style="display:none;">
+            <h2>QUESTION MANAGER</h2>
+            <div id="adminMsg"></div>
+            <div class="admin-toolbar">
+                <div class="admin-toolbar-row">
+                    <button class="abtn-success" onclick="showAddForm()">+ Add New</button>
+                    <button class="abtn-danger" onclick="deleteAllQuestions()">Delete All</button>
+                    <button class="abtn-secondary" onclick="resetToDefaults()">Reset Defaults</button>
+                    <button class="abtn-secondary" onclick="showChangePassword()" style="background:#6a5acd;color:#fff;">Password</button>
+                </div>
+                <div class="admin-toolbar-row">
+                    <button class="abtn-primary" onclick="saveAndClose()">Save &amp; Close</button>
+                    <button class="abtn-secondary" onclick="closeAdmin()">Cancel</button>
+                </div>
+            </div>
+            <div id="adminEditArea"></div>
+            <h3>Questions (<span id="adminQCount">0</span>)</h3>
+            <div id="adminQList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- SOUNDS -->
+<audio id="correct" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+<audio id="wrong" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+<audio id="buzz" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+<script>
+/* ============================================================
+   GAME DATA
+   ============================================================ */
+const defaultGameData = [
+    { question: "Who is the Tarsier in the Family?", answers: [
+        { text: "Tita Ella", points: 20, revealed: false },
+        { text: "Ate Anne", points: 12, revealed: false },
+        { text: "Dr Joy", points: 8, revealed: false },
+        { text: "Mommy Nene", points: 6, revealed: false },
+        { text: "Judge Grace", points: 5, revealed: false },
+        { text: "Ninang Glo", points: 4, revealed: false },
+        { text: "Bastik", points: 2, revealed: false },
+        { text: "All Girls", points: 1, revealed: false }
+    ]},
+    { question: "Who is the Quietest member?", answers: [
+        { text: "Tito Adows", points: 15, revealed: false },
+        { text: "Tito Basil", points: 12, revealed: false },
+        { text: "None", points: 8, revealed: false },
+        { text: "Tito Mon", points: 6, revealed: false },
+        { text: "Vincent", points: 4, revealed: false },
+        { text: "Nina", points: 3, revealed: false },
+        { text: "Moana", points: 2, revealed: false }
+    ]},
+    { question: "Name a phrase or expression that Daddy Pepe is famous for saying.", answers: [
+        { text: "whatever!", points: 20, revealed: false },
+        { text: "my pabs", points: 16, revealed: false },
+        { text: "ha! Ha!", points: 12, revealed: false },
+        { text: "consistent lang", points: 7, revealed: false },
+        { text: "Isa pa. pang delete", points: 5, revealed: false },
+        { text: "Love, Daddy Pepe", points: 5, revealed: false },
+        { text: "No Problem!", points: 3, revealed: false }
+    ]},
+    { question: "Name one Famous Song which is special to the Victoria Family", answers: [
+        { text: "L-O-V-E", points: 20, revealed: false },
+        { text: "Angelina", points: 18, revealed: false },
+        { text: "My Girl/Dad", points: 14, revealed: false },
+        { text: "I want it that way", points: 10, revealed: false },
+        { text: "An Affair to Remember/A love Affair", points: 8, revealed: false },
+        { text: "Tanging Yaman", points: 6, revealed: false },
+        { text: "Sound of Music", points: 4, revealed: false }
+    ]},
+    { question: "Name One Skill that the Victoria Family will win a gold medal in?", answers: [
+        { text: "Cooking", points: 15, revealed: false },
+        { text: "Dancing", points: 10, revealed: false },
+        { text: "Eating", points: 9, revealed: false },
+        { text: "Debating", points: 7, revealed: false },
+        { text: "Bashing", points: 5, revealed: false },
+        { text: "Singing", points: 3, revealed: false },
+        { text: "Best Dressed/Dressing Up", points: 2, revealed: false }
+    ]},
+    { question: "Name a food that is always present at our family gatherings", answers: [
+        { text: "Fried Chicken", points: 20, revealed: false },
+        { text: "Rice", points: 15, revealed: false },
+        { text: "Kare-Kare", points: 13, revealed: false },
+        { text: "Paes/Fish", points: 11, revealed: false },
+        { text: "Longganisa", points: 10, revealed: false },
+        { text: "Menudo", points: 8, revealed: false },
+        { text: "Lechon", points: 7, revealed: false }
+    ]},
+    { question: "Name one item that can be found in Daddy Pepe's house.", answers: [
+        { text: "pieta", points: 21, revealed: false },
+        { text: "pictures", points: 16, revealed: false },
+        { text: "rocking chair", points: 8, revealed: false },
+        { text: "back scratcher/pangkamot", points: 4, revealed: false },
+        { text: "hospital bed", points: 4, revealed: false },
+        { text: "hats", points: 3, revealed: false }
+    ]},
+    { question: "Name a reason why a family gathering might go past midnight?", answers: [
+        { text: "Stories/Chikahan", points: 12, revealed: false },
+        { text: "Drinks/Inuman", points: 10, revealed: false },
+        { text: "Karaoke/Videoke", points: 8, revealed: false },
+        { text: "Movies/Netflix/Horror Movies", points: 6, revealed: false },
+        { text: "Board Games", points: 5, revealed: false },
+        { text: "Food", points: 4, revealed: false }
+    ]},
+    { question: "If the Family started a singing group, who would be the lead singer?", answers: [
+        { text: "Tita Bong", points: 12, revealed: false },
+        { text: "Korina", points: 10, revealed: false },
+        { text: "Dr Joy", points: 8, revealed: false },
+        { text: "Ate Anne", points: 6, revealed: false },
+        { text: "Aimee", points: 6, revealed: false },
+        { text: "Amanda", points: 6, revealed: false }
+    ]},
+    { question: "Who is the \"official photographer\" of the family?", answers: [
+        { text: "Tita Ella", points: 17, revealed: false },
+        { text: "Tito Ben", points: 12, revealed: false },
+        { text: "Tita Bong", points: 10, revealed: false },
+        { text: "Dr Joy", points: 8, revealed: false },
+        { text: "Tito Jess", points: 6, revealed: false },
+        { text: "Justin", points: 4, revealed: false }
+    ]},
+    { question: "Which family member is most likely to start a Karaoke session?", answers: [
+        { text: "Tita Bong", points: 20, revealed: false },
+        { text: "Korina/Jenny", points: 18, revealed: false },
+        { text: "Aimee", points: 8, revealed: false },
+        { text: "Tita May", points: 6, revealed: false },
+        { text: "Ryanne", points: 4, revealed: false }
+    ]},
+    { question: "Name a specific gift or pasalubong you'd expect from a family member coming home from abroad?", answers: [
+        { text: "chocolates", points: 14, revealed: false },
+        { text: "keychain", points: 10, revealed: false },
+        { text: "magnet", points: 8, revealed: false },
+        { text: "vitamins", points: 6, revealed: false },
+        { text: "ziplock/cling wrap", points: 4, revealed: false }
+    ]},
+    { question: "What is the most common/classic profession within the Victoria family?", answers: [
+        { text: "Teacher/Education", points: 20, revealed: false },
+        { text: "Lawyer/Law", points: 15, revealed: false },
+        { text: "Accountant/Accounting", points: 10, revealed: false },
+        { text: "Government/Civil Service", points: 6, revealed: false }
+    ]},
+    { question: "Name the family member who is most likely to win a debate or argument.", answers: [
+        { text: "Judge Grace", points: 14, revealed: false },
+        { text: "Tito Jess", points: 13, revealed: false },
+        { text: "Atty Glo", points: 8, revealed: false },
+        { text: "Atty Kix", points: 7, revealed: false }
+    ]},
+    { question: "What is the one thing which a family member living abroad misses the most?", answers: [
+        { text: "Food/Kainan", points: 20, revealed: false },
+        { text: "Family/Bonding", points: 18, revealed: false },
+        { text: "Christmas", points: 15, revealed: false }
+    ]},
+    { question: "Who is the funniest family member?", answers: [
+        { text: "Kix/Kiko/Francis", points: 10, revealed: false },
+        { text: "Jess", points: 10, revealed: false },
+        { text: "Jovy", points: 5, revealed: false }
+    ]},
+    { question: "Who is the family \"tech support\" - the person everyone goes to when their phone or wifi isn't working?", answers: [
+        { text: "Tito Jess", points: 12, revealed: false },
+        { text: "Justin", points: 10, revealed: false },
+        { text: "Jewel", points: 8, revealed: false }
+    ]},
+    { question: "Name a country, other than the Philippines, where many of our relatives live.", answers: [
+        { text: "Canada", points: 15, revealed: false },
+        { text: "Australia", points: 12, revealed: false }
+    ]}
+];
+
+let gameData = JSON.parse(localStorage.getItem('familyFeudMobileQuestions')) || JSON.parse(JSON.stringify(defaultGameData));
+
+/* ============================================================
+   GAME STATE
+   ============================================================ */
+let qIndex = 0;
+let currentTeam = "A";
+let scores = { A: 0, B: 0 };
+let strikes = { A: 0, B: 0 };
+let time = 30;
+let timer;
+let paused = false;
+let gameStarted = false;
+
+const $ = id => document.getElementById(id);
+
+/* ============================================================
+   MULTIPLAYER STATE
+   ============================================================ */
+let peer = null;
+let conn = null;
+let myRole = null;
+let myTeam = null;
+let roomId = null;
+
+/* ============================================================
+   LOBBY
+   ============================================================ */
+function generateRoomCode() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+}
+
+function createRoom() {
+    myRole = "host";
+    myTeam = "A";
+    roomId = "ffm-" + generateRoomCode();
+
+    $("lobbyMenu").style.display = "none";
+    $("lobbyHost").style.display = "block";
+    $("roomCode").textContent = roomId.replace("ffm-", "");
+
+    peer = new Peer(roomId);
+
+    peer.on("open", function () {
+        $("hostStatus").innerHTML = '<span class="conn-dot conn-wait"></span> Waiting for opponent...';
+    });
+
+    peer.on("connection", function (connection) {
+        conn = connection;
+        setupConnection();
+        conn.on("open", function () {
+            conn.send({ type: "init", gameData: gameData });
+            $("hostStatus").innerHTML = '<span class="conn-dot conn-ok"></span> Connected! Starting...';
+            setTimeout(startGame, 1500);
+        });
+    });
+
+    peer.on("error", function (err) {
+        $("hostStatus").innerHTML = '<span class="conn-dot conn-off"></span> Error: ' + err.message;
+    });
+}
+
+function showJoin() {
+    $("lobbyMenu").style.display = "none";
+    $("lobbyJoin").style.display = "block";
+    setTimeout(() => $("joinCodeInput").focus(), 100);
+}
+
+function backToMenu() {
+    $("lobbyMenu").style.display = "block";
+    $("lobbyHost").style.display = "none";
+    $("lobbyJoin").style.display = "none";
+    if (peer) { peer.destroy(); peer = null; }
+}
+
+function joinRoom() {
+    const code = $("joinCodeInput").value.trim().toUpperCase();
+    if (!code || code.length < 4) {
+        $("joinStatus").innerHTML = '<span class="lobby-error">Enter a valid room code.</span>';
+        return;
+    }
+    myRole = "guest";
+    myTeam = "B";
+    roomId = "ffm-" + code;
+
+    $("joinStatus").innerHTML = '<span class="conn-dot conn-wait"></span> Connecting...';
+
+    peer = new Peer();
+    peer.on("open", function () {
+        conn = peer.connect(roomId, { reliable: true });
+        conn.on("open", function () {
+            setupConnection();
+            $("joinStatus").innerHTML = '<span class="conn-dot conn-ok"></span> Connected! Waiting for host...';
+        });
+        conn.on("error", function () {
+            $("joinStatus").innerHTML = '<span class="lobby-error">Failed to connect. Check code.</span>';
+        });
+    });
+    peer.on("error", function (err) {
+        $("joinStatus").innerHTML = '<span class="lobby-error">Error: ' + err.message + '</span>';
+    });
+}
+
+function copyRoomCode() {
+    const code = roomId.replace("ffm-", "");
+    navigator.clipboard.writeText(code).then(() => {
+        const btn = event.target;
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = "Copy Code", 2000);
+    });
+}
+
+/* ============================================================
+   CONNECTION
+   ============================================================ */
+function setupConnection() {
+    conn.on("data", handleMessage);
+    conn.on("close", function () {
+        if (gameStarted) {
+            $("connDot").className = "conn-dot conn-off";
+        }
+    });
+}
+
+function sendMsg(data) {
+    if (conn && conn.open) conn.send(data);
+}
+
+function handleMessage(data) {
+    switch (data.type) {
+        case "init":
+            gameData = data.gameData;
+            startGame();
+            break;
+        case "guess":
+            if (myRole === "host") processGuessLocally(data.guess);
+            break;
+        case "switch_team":
+            currentTeam = currentTeam === "A" ? "B" : "A";
+            $("buzz").play();
+            render(); updateTurnUI(); resetTimer();
+            break;
+        case "next_question":
+            qIndex++;
+            if (qIndex >= gameData.length) endGame();
+            else loadQuestion();
+            break;
+        case "reveal_all":
+            gameData[qIndex].answers.forEach(a => a.revealed = true);
+            render();
+            break;
+        case "timer_pause":
+            paused = data.paused;
+            break;
+        case "correct":
+            $("correct").play();
+            gameData[qIndex].answers[data.answerIndex].revealed = true;
+            scores[data.team] += data.points;
+            render();
+            break;
+        case "wrong":
+            $("wrong").play();
+            strikes[data.team]++;
+            render();
+            if (strikes[data.team] >= 3) {
+                currentTeam = currentTeam === "A" ? "B" : "A";
+                $("buzz").play();
+                render(); updateTurnUI(); resetTimer();
+            }
+            break;
+        case "game_over":
+            endGame();
+            break;
+    }
+}
+
+/* ============================================================
+   START GAME
+   ============================================================ */
+function startGame() {
+    gameStarted = true;
+    $("lobby").style.display = "none";
+    $("app").style.display = "flex";
+
+    const badge = $("myTeamBadge");
+    badge.textContent = "You: Team " + myTeam;
+    badge.className = "team-badge team-badge-" + myTeam.toLowerCase();
+
+    if (myRole === "guest") {
+        $("switchBtn").style.display = "none";
+        $("nextBtn").style.display = "none";
+        $("revealAllBtn").style.display = "none";
+        $("adminBtn").style.display = "none";
+    }
+
+    loadQuestion();
+}
+
+/* ============================================================
+   RELAXED MATCHING
+   ============================================================ */
+function normalize(str) {
+    return str.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+}
+
+function isMatch(answer, guess) {
+    const a = normalize(answer);
+    const g = normalize(guess);
+    return a.includes(g) || g.includes(a);
+}
+
+/* ============================================================
+   GAME FUNCTIONS
+   ============================================================ */
+function loadQuestion() {
+    gameData[qIndex].answers.forEach(a => a.revealed = false);
+    strikes = { A: 0, B: 0 };
+    render();
+    updateTurnUI();
+    resetTimer();
+}
+
+function render() {
+    $("scores").textContent = `Team A: ${scores.A} | Team B: ${scores.B}`;
+    $("question").textContent = gameData[qIndex].question;
+
+    $("answers").innerHTML = gameData[qIndex].answers.map(a =>
+        `<div class="answer ${a.revealed ? "revealed" : ""}">
+            ${a.revealed ? a.text.toUpperCase() + " " + a.points : "____"}
+        </div>`
+    ).join("");
+
+    $("strikesA").textContent = "❌".repeat(strikes.A);
+    $("strikesB").textContent = "❌".repeat(strikes.B);
+}
+
+function updateTurnUI() {
+    const isMyTurn = currentTeam === myTeam;
+    const input = $("guess");
+
+    input.disabled = !isMyTurn;
+    input.placeholder = isMyTurn ? "YOUR TURN!" : "Waiting...";
+
+    const teamEl = $("currentTeam");
+    if (isMyTurn) {
+        teamEl.className = "your-turn-glow";
+        teamEl.textContent = "YOUR TURN!";
+    } else {
+        teamEl.className = "waiting-turn";
+        teamEl.textContent = "Opponent's Turn";
+    }
+
+    if (isMyTurn) input.focus();
+}
+
+function submitAnswer() {
+    if (currentTeam !== myTeam) return;
+    const guess = $("guess").value.trim();
+    $("guess").value = "";
+    if (!guess) return;
+
+    if (myRole === "host") {
+        processGuessLocally(guess);
+    } else {
+        sendMsg({ type: "guess", guess: guess });
+    }
+}
+
+function processGuessLocally(guess) {
+    resetTimer();
+    const q = gameData[qIndex];
+    const matchIndex = q.answers.findIndex(a => !a.revealed && isMatch(a.text, guess));
+
+    if (matchIndex !== -1) {
+        const match = q.answers[matchIndex];
+        match.revealed = true;
+        scores[currentTeam] += match.points;
+        $("correct").play();
+        render();
+        sendMsg({ type: "correct", answerIndex: matchIndex, team: currentTeam, points: match.points });
+    } else {
+        strikes[currentTeam]++;
+        $("wrong").play();
+        render();
+        sendMsg({ type: "wrong", team: currentTeam });
+        if (strikes[currentTeam] >= 3) {
+            currentTeam = currentTeam === "A" ? "B" : "A";
+            $("buzz").play();
+            render(); updateTurnUI(); resetTimer();
+            sendMsg({ type: "switch_team" });
+        }
+    }
+}
+
+function switchTeam() {
+    if (myRole !== "host") return;
+    currentTeam = currentTeam === "A" ? "B" : "A";
+    $("buzz").play();
+    render(); updateTurnUI(); resetTimer();
+    sendMsg({ type: "switch_team" });
+}
+
+function nextQuestion() {
+    if (myRole !== "host") return;
+    qIndex++;
+    if (qIndex >= gameData.length) {
+        endGame();
+        sendMsg({ type: "game_over" });
+    } else {
+        loadQuestion();
+        sendMsg({ type: "next_question" });
+    }
+}
+
+function revealAll() {
+    if (myRole !== "host") return;
+    gameData[qIndex].answers.forEach(a => a.revealed = true);
+    render();
+    sendMsg({ type: "reveal_all" });
+}
+
+function endGame() {
+    clearInterval(timer);
+    const myTeamWon = (myTeam === "A" && scores.A > scores.B) ||
+                      (myTeam === "B" && scores.B > scores.A);
+    $("final").textContent =
+        scores.A > scores.B ? (myTeamWon ? "🎉 YOU WIN! 🎉" : "TEAM A WINS") :
+        scores.B > scores.A ? (myTeamWon ? "🎉 YOU WIN! 🎉" : "TEAM B WINS") : "TIE!";
+    document.querySelectorAll("button,input").forEach(e => e.disabled = true);
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+function startTimer() {
+    clearInterval(timer);
+    time = 30;
+    $("timer").textContent = time;
+    timer = setInterval(() => {
+        if (!paused) {
+            time--;
+            $("timer").textContent = time;
+            if (time <= 0) {
+                clearInterval(timer);
+                if (myRole === "host") {
+                    strikes[currentTeam]++;
+                    render();
+                    sendMsg({ type: "wrong", team: currentTeam });
+                    if (strikes[currentTeam] >= 3) {
+                        currentTeam = currentTeam === "A" ? "B" : "A";
+                        $("buzz").play();
+                        render(); updateTurnUI();
+                        sendMsg({ type: "switch_team" });
+                    }
+                    resetTimer();
+                }
+            }
+        }
+    }, 1000);
+}
+
+function resetTimer() {
+    paused = false;
+    startTimer();
+}
+
+function pauseTimer() {
+    paused = !paused;
+    sendMsg({ type: "timer_pause", paused: paused });
+}
+
+$("guess").addEventListener("keydown", e => {
+    if (e.key === "Enter") submitAnswer();
+});
+
+/* ============================================================
+   ADMIN PANEL (Host only)
+   ============================================================ */
+const DEFAULT_ADMIN_PASSWORD = "daddypepe1931";
+let adminPassword = localStorage.getItem('familyFeudMobileAdminPwd') || DEFAULT_ADMIN_PASSWORD;
+let adminAuthenticated = false;
+let adminEditData = [];
+
+function openAdmin() {
+    clearInterval(timer);
+    $("adminOverlay").classList.add("active");
+    $("adminPasswordGate").style.display = "block";
+    $("adminContent").style.display = "none";
+    $("adminPwdInput").value = "";
+    $("adminPwdError").innerHTML = "";
+    adminAuthenticated = false;
+    setTimeout(() => $("adminPwdInput").focus(), 100);
+}
+
+function closeAdmin() {
+    $("adminOverlay").classList.remove("active");
+    adminAuthenticated = false;
+    $("adminEditArea").innerHTML = "";
+    if (gameStarted) resetTimer();
+}
+
+function checkAdminPassword() {
+    const input = $("adminPwdInput").value;
+    if (input === adminPassword) {
+        adminAuthenticated = true;
+        $("adminPasswordGate").style.display = "none";
+        $("adminContent").style.display = "block";
+        adminEditData = JSON.parse(JSON.stringify(gameData));
+        renderAdminList();
+    } else {
+        $("adminPwdError").innerHTML = '<div class="admin-msg admin-msg-error">Incorrect password.</div>';
+    }
+}
+
+function showAdminMsg(msg, type) {
+    const el = $("adminMsg");
+    el.innerHTML = '<div class="admin-msg admin-msg-' + type + '">' + msg + '</div>';
+    setTimeout(() => el.innerHTML = "", 3000);
+}
+
+function renderAdminList() {
+    $("adminQCount").innerText = adminEditData.length;
+    const list = $("adminQList");
+    list.innerHTML = "";
+    if (adminEditData.length === 0) {
+        list.innerHTML = '<p style="color:#aaa;text-align:center;font-size:3.5vw;">No questions yet.</p>';
+        return;
+    }
+    adminEditData.forEach((q, qi) => {
+        const card = document.createElement("div");
+        card.className = "admin-question-card";
+        let answersHtml = q.answers.map((a, ai) =>
+            '<div style="color:#ccc;font-size:3.2vw;margin-left:12px;">' +
+                (ai + 1) + '. ' + a.text + ' <span style="color:#ffd700;">(' + a.points + ' pts)</span></div>'
+        ).join("");
+        card.innerHTML =
+            '<div class="q-header"><span>Q' + (qi + 1) + ': ' + q.question + '</span>' +
+            '<div style="display:flex;gap:4px;flex-shrink:0;">' +
+                '<button class="abtn-primary" onclick="editQuestion(' + qi + ')" style="font-size:3vw;padding:6px 10px;">Edit</button>' +
+                '<button class="abtn-danger" onclick="deleteQuestion(' + qi + ')" style="font-size:3vw;padding:6px 10px;">Del</button>' +
+            '</div></div>' + answersHtml;
+        list.appendChild(card);
+    });
+}
+
+function showAddForm() { showEditForm(-1); }
+function editQuestion(index) { showEditForm(index); }
+
+function showEditForm(index) {
+    const isNew = index === -1;
+    const q = isNew ? { question: "", answers: [{ text: "", points: 0 }] } : JSON.parse(JSON.stringify(adminEditData[index]));
+    const area = $("adminEditArea");
+
+    function renderForm() {
+        let answersHtml = q.answers.map((a, ai) =>
+            '<div class="admin-answer-row">' +
+                '<input type="text" value="' + a.text.replace(/"/g, '&quot;') + '" placeholder="Answer" id="aAnsT' + ai + '">' +
+                '<input type="number" value="' + a.points + '" placeholder="Pts" min="0" id="aAnsP' + ai + '">' +
+                '<button class="abtn-danger" onclick="adminRemoveAns(' + ai + ')" style="font-size:3vw;padding:6px 8px;"' + (q.answers.length <= 1 ? ' disabled' : '') + '>X</button>' +
+            '</div>'
+        ).join("");
+        area.innerHTML =
+            '<div class="admin-edit-form"><h3>' + (isNew ? "Add Question" : "Edit Question") + '</h3>' +
+            '<label style="color:#aaa;font-size:3.2vw;">Question:</label>' +
+            '<input type="text" id="aQText" value="' + q.question.replace(/"/g, '&quot;') + '" placeholder="Enter question">' +
+            '<label style="color:#aaa;font-size:3.2vw;margin-top:8px;display:block;">Answers:</label>' +
+            '<div id="aAnsList">' + answersHtml + '</div>' +
+            '<button class="abtn-secondary" onclick="adminAddAns()" style="margin-top:6px;font-size:3vw;">+ Add Answer</button>' +
+            '<div style="margin-top:12px;">' +
+                '<button class="abtn-success" onclick="adminSaveQ(' + index + ')">Save</button>' +
+                '<button class="abtn-secondary" onclick="document.getElementById(\'adminEditArea\').innerHTML=\'\';">Cancel</button>' +
+            '</div></div>';
+    }
+    window._aeQ = q;
+    window._aeRender = renderForm;
+    renderForm();
+    $("aQText").focus();
+}
+
+function adminCollectAnswers() {
+    const q = window._aeQ;
+    const qEl = document.getElementById("aQText");
+    if (qEl) q.question = qEl.value;
+    q.answers.forEach((a, ai) => {
+        const t = document.getElementById("aAnsT" + ai);
+        const p = document.getElementById("aAnsP" + ai);
+        if (t) a.text = t.value;
+        if (p) a.points = parseInt(p.value) || 0;
+    });
+}
+
+function adminAddAns() {
+    adminCollectAnswers();
+    window._aeQ.answers.push({ text: "", points: 0 });
+    window._aeRender();
+}
+
+function adminRemoveAns(ai) {
+    adminCollectAnswers();
+    window._aeQ.answers.splice(ai, 1);
+    window._aeRender();
+}
+
+function adminSaveQ(index) {
+    adminCollectAnswers();
+    const q = window._aeQ;
+    if (!q.question.trim()) { showAdminMsg("Question empty.", "error"); return; }
+    q.answers = q.answers.filter(a => a.text.trim() !== "");
+    if (q.answers.length === 0) { showAdminMsg("Need at least one answer.", "error"); return; }
+    q.answers.forEach(a => a.revealed = false);
+    if (index === -1) { adminEditData.push(q); showAdminMsg("Added!", "success"); }
+    else { adminEditData[index] = q; showAdminMsg("Updated!", "success"); }
+    $("adminEditArea").innerHTML = "";
+    renderAdminList();
+}
+
+function deleteQuestion(index) {
+    if (!confirm('Delete "' + adminEditData[index].question + '"?')) return;
+    adminEditData.splice(index, 1);
+    showAdminMsg("Deleted.", "success");
+    renderAdminList();
+}
+
+function deleteAllQuestions() {
+    if (!confirm("Delete ALL?")) return;
+    if (!confirm("Are you sure?")) return;
+    adminEditData = [];
+    showAdminMsg("All deleted.", "success");
+    renderAdminList();
+}
+
+function resetToDefaults() {
+    if (!confirm("Reset to defaults?")) return;
+    adminEditData = JSON.parse(JSON.stringify(defaultGameData));
+    showAdminMsg("Reset.", "success");
+    renderAdminList();
+}
+
+function showChangePassword() {
+    $("adminEditArea").innerHTML =
+        '<div class="admin-edit-form"><h3>Change Password</h3>' +
+        '<input type="password" id="cpwdCurrent" placeholder="Current password">' +
+        '<input type="password" id="cpwdNew" placeholder="New password" style="margin-top:6px;">' +
+        '<input type="password" id="cpwdConfirm" placeholder="Confirm" style="margin-top:6px;" onkeydown="if(event.key===\'Enter\')saveNewPassword()">' +
+        '<div style="margin-top:12px;">' +
+            '<button class="abtn-success" onclick="saveNewPassword()">Update</button>' +
+            '<button class="abtn-secondary" onclick="document.getElementById(\'adminEditArea\').innerHTML=\'\';">Cancel</button>' +
+        '</div></div>';
+    document.getElementById("cpwdCurrent").focus();
+}
+
+function saveNewPassword() {
+    var cur = document.getElementById("cpwdCurrent").value;
+    var np = document.getElementById("cpwdNew").value;
+    var cf = document.getElementById("cpwdConfirm").value;
+    if (cur !== adminPassword) { showAdminMsg("Wrong password.", "error"); return; }
+    if (!np || np.length < 4) { showAdminMsg("Min 4 chars.", "error"); return; }
+    if (np !== cf) { showAdminMsg("No match.", "error"); return; }
+    adminPassword = np;
+    localStorage.setItem('familyFeudMobileAdminPwd', adminPassword);
+    $("adminEditArea").innerHTML = "";
+    showAdminMsg("Changed!", "success");
+}
+
+function saveAndClose() {
+    gameData = JSON.parse(JSON.stringify(adminEditData));
+    gameData.forEach(q => q.answers.forEach(a => a.revealed = false));
+    localStorage.setItem('familyFeudMobileQuestions', JSON.stringify(gameData));
+
+    qIndex = 0;
+    currentTeam = "A";
+    strikes = { A: 0, B: 0 };
+    scores = { A: 0, B: 0 };
+    $("guess").disabled = false;
+    document.querySelectorAll("button").forEach(b => b.disabled = false);
+    $("final").textContent = "";
+
+    closeAdmin();
+
+    if (gameStarted && myRole === "host") {
+        sendMsg({ type: "init", gameData: gameData });
+        loadQuestion();
+    }
+}
+</script>
+
+</body>
+</html>
