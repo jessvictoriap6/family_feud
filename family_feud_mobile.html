@@ -311,6 +311,7 @@ button {
                     <button class="abtn-success" onclick="showAddForm()">+ Add New</button>
                     <button class="abtn-danger" onclick="deleteAllQuestions()">Delete All</button>
                     <button class="abtn-secondary" onclick="resetToDefaults()">Reset Defaults</button>
+                    <button class="abtn-secondary" onclick="showChangePassword()" style="background:#6a5acd;color:#fff;">Password</button>
                 </div>
                 <div class="admin-toolbar-row">
                     <button class="abtn-primary" onclick="saveAndClose()">Save &amp; Close</button>
@@ -670,7 +671,8 @@ $("guess").addEventListener("keydown", e => {
 /* =====================
    ADMIN PANEL
    ===================== */
-const ADMIN_PASSWORD = "daddypepe1931";
+const DEFAULT_ADMIN_PASSWORD = "daddypepe1931";
+let adminPassword = localStorage.getItem('familyFeudMobileAdminPwd') || DEFAULT_ADMIN_PASSWORD;
 let adminAuthenticated = false;
 let adminEditData = [];
 
@@ -694,7 +696,7 @@ function closeAdmin() {
 
 function checkAdminPassword() {
     const input = $("adminPwdInput").value;
-    if (input === ADMIN_PASSWORD) {
+    if (input === adminPassword) {
         adminAuthenticated = true;
         $("adminPasswordGate").style.display = "none";
         $("adminContent").style.display = "block";
@@ -844,6 +846,38 @@ function resetToDefaults() {
     adminEditData = JSON.parse(JSON.stringify(defaultGameData));
     showAdminMsg("Questions reset to defaults.", "success");
     renderAdminList();
+}
+
+function showChangePassword() {
+    const area = $("adminEditArea");
+    area.innerHTML =
+        '<div class="admin-edit-form">' +
+            '<h3>Change Password</h3>' +
+            '<label style="color:#aaa;font-size:3.2vw;">Current Password:</label>' +
+            '<input type="password" id="cpwdCurrent" placeholder="Enter current password">' +
+            '<label style="color:#aaa;font-size:3.2vw;margin-top:8px;display:block;">New Password:</label>' +
+            '<input type="password" id="cpwdNew" placeholder="Enter new password">' +
+            '<label style="color:#aaa;font-size:3.2vw;margin-top:8px;display:block;">Confirm New Password:</label>' +
+            '<input type="password" id="cpwdConfirm" placeholder="Confirm new password" onkeydown="if(event.key===\'Enter\')saveNewPassword()">' +
+            '<div style="margin-top:12px;">' +
+                '<button class="abtn-success" onclick="saveNewPassword()">Update Password</button>' +
+                '<button class="abtn-secondary" onclick="document.getElementById(\'adminEditArea\').innerHTML=\'\';">Cancel</button>' +
+            '</div>' +
+        '</div>';
+    document.getElementById("cpwdCurrent").focus();
+}
+
+function saveNewPassword() {
+    var current = document.getElementById("cpwdCurrent").value;
+    var newPwd = document.getElementById("cpwdNew").value;
+    var confirmPwd = document.getElementById("cpwdConfirm").value;
+    if (current !== adminPassword) { showAdminMsg("Current password is incorrect.", "error"); return; }
+    if (!newPwd || newPwd.length < 4) { showAdminMsg("New password must be at least 4 characters.", "error"); return; }
+    if (newPwd !== confirmPwd) { showAdminMsg("New passwords do not match.", "error"); return; }
+    adminPassword = newPwd;
+    localStorage.setItem('familyFeudMobileAdminPwd', adminPassword);
+    $("adminEditArea").innerHTML = "";
+    showAdminMsg("Password changed successfully!", "success");
 }
 
 function saveAndClose() {

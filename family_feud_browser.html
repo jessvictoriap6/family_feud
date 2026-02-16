@@ -293,6 +293,7 @@ button {
                     <button class="admin-btn-success" onclick="showAddForm()">+ Add New Question</button>
                     <button class="admin-btn-danger" onclick="deleteAllQuestions()">Delete All Questions</button>
                     <button class="admin-btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                    <button class="admin-btn-secondary" onclick="showChangePassword()" style="background:#6a5acd;color:#fff;">Change Password</button>
                 </div>
                 <div>
                     <button class="admin-btn-primary" onclick="saveAndClose()">Save &amp; Close</button>
@@ -678,7 +679,8 @@ function togglePause(){
 }
 
 /* ========== ADMIN PANEL ========== */
-const ADMIN_PASSWORD = "daddypepe1931";
+const DEFAULT_ADMIN_PASSWORD = "daddypepe1931";
+let adminPassword = localStorage.getItem('familyFeudAdminPwd') || DEFAULT_ADMIN_PASSWORD;
 let adminAuthenticated = false;
 let adminEditData = []; // working copy during admin session
 
@@ -702,7 +704,7 @@ function closeAdmin() {
 
 function checkAdminPassword() {
     const input = document.getElementById("adminPasswordInput").value;
-    if (input === ADMIN_PASSWORD) {
+    if (input === adminPassword) {
         adminAuthenticated = true;
         document.getElementById("adminPasswordGate").style.display = "none";
         document.getElementById("adminContent").style.display = "block";
@@ -876,6 +878,39 @@ function resetToDefaults() {
     adminEditData = JSON.parse(JSON.stringify(defaultGameData));
     showAdminMsg("Questions reset to defaults.", "success");
     renderAdminQuestionList();
+}
+
+function showChangePassword() {
+    const area = document.getElementById("adminEditArea");
+    area.innerHTML = `
+        <div class="admin-edit-form">
+            <h3>Change Admin Password</h3>
+            <label style="color:#aaa;font-size:14px;">Current Password:</label>
+            <input type="password" id="cpwdCurrent" placeholder="Enter current password">
+            <label style="color:#aaa;font-size:14px;margin-top:8px;display:block;">New Password:</label>
+            <input type="password" id="cpwdNew" placeholder="Enter new password">
+            <label style="color:#aaa;font-size:14px;margin-top:8px;display:block;">Confirm New Password:</label>
+            <input type="password" id="cpwdConfirm" placeholder="Confirm new password" onkeydown="if(event.key==='Enter')saveNewPassword()">
+            <div style="margin-top:15px;">
+                <button class="admin-btn-success" onclick="saveNewPassword()">Update Password</button>
+                <button class="admin-btn-secondary" onclick="document.getElementById('adminEditArea').innerHTML='';">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.getElementById("cpwdCurrent").focus();
+}
+
+function saveNewPassword() {
+    const current = document.getElementById("cpwdCurrent").value;
+    const newPwd = document.getElementById("cpwdNew").value;
+    const confirm = document.getElementById("cpwdConfirm").value;
+    if (current !== adminPassword) { showAdminMsg("Current password is incorrect.", "error"); return; }
+    if (!newPwd || newPwd.length < 4) { showAdminMsg("New password must be at least 4 characters.", "error"); return; }
+    if (newPwd !== confirm) { showAdminMsg("New passwords do not match.", "error"); return; }
+    adminPassword = newPwd;
+    localStorage.setItem('familyFeudAdminPwd', adminPassword);
+    document.getElementById("adminEditArea").innerHTML = "";
+    showAdminMsg("Password changed successfully!", "success");
 }
 
 function saveAndClose() {
