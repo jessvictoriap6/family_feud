@@ -2,123 +2,646 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Family Feud – Laptop Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Family Feud – Victoria Family Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Bebas+Neue&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
 <style>
-body {
-    margin: 0;
-    padding: 0;
-    background: #020d26;
-    color: white;
-    font-family: "Arial Black", sans-serif;
+:root {
+    --bg: #020a1e;
+    --panel: #071535;
+    --gold: #f5c842;
+    --gold2: #d4a520;
+    --red: #cc2222;
+    --red2: #ff4444;
+    --blue: #1a3a8f;
+    --blue2: #2255cc;
+    --teal: #00c8d4;
+    --white: #f0f4ff;
+    --muted: #7a8ab0;
+    --answer-bg: #0d2060;
+    --answer-revealed: #1a3a8f;
+    --radius: 10px;
 }
-h1 {
-    font-size: 4vw;
-    color: #ffd700;
-    text-align: center;
-    margin: 10px 0;
-    text-shadow: 2px 2px #000;
-}
-.board {
-    max-width: 1200px;
-    margin: auto;
-    padding: 20px;
-}
-#question {
-    font-size: 2.5vw;
-    margin: 20px 0;
-}
-.answers {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-.answer {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px;
-    background: #ffcc00;
-    color: #020d26;
-    font-weight: bold;
-    border-radius: 10px;
-    font-size: 2vw;
-    cursor: pointer;
-    perspective: 1000px;
-}
-.answer .front, .answer .back {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    backface-visibility: hidden;
-    transition: transform 0.8s;
-    padding: 0 10px;
-}
-.answer .back { transform: rotateY(180deg); }
-.answer.revealed .front { transform: rotateY(180deg); }
-.answer.revealed .back { transform: rotateY(0deg); }
 
-input {
-    font-size: 2vw;
-    padding: 8px;
-    width: 60%;
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(26,58,143,0.3) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 100%, rgba(204,34,34,0.2) 0%, transparent 60%);
+}
+
+/* ===== HEADER ===== */
+.game-header {
+    text-align: center;
+    padding: 16px 20px 8px;
+    position: relative;
+}
+.game-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 8vw, 80px);
+    letter-spacing: 8px;
+    color: var(--gold);
+    text-shadow: 0 0 40px rgba(245,200,66,0.5), 3px 3px 0 rgba(0,0,0,0.8);
+    line-height: 1;
+}
+.game-subtitle {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(13px, 2vw, 17px);
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+.header-strip {
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--red), var(--gold), transparent);
     margin: 10px 0;
 }
-button {
-    font-size: 1.8vw;
-    padding: 8px 16px;
-    margin: 5px;
-    border-radius: 8px;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    background: #ffd700;
-    color: #020d26;
+
+/* ===== SCOREBOARD ===== */
+.scoreboard {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    max-width: 900px;
+    margin: 0 auto 12px;
+    padding: 0 16px;
+    align-items: center;
 }
-.strike {
-    font-size: 5vw;
-    color: red;
-    display: inline-block;
-    margin: 0 10px;
+.team-card {
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 12px 16px;
+    text-align: center;
+    border: 2px solid #1a2a50;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+.team-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: 12px;
+}
+.team-card.team-a::before { background: radial-gradient(ellipse at center, rgba(26,58,143,0.4), transparent); }
+.team-card.team-b::before { background: radial-gradient(ellipse at center, rgba(204,34,34,0.4), transparent); }
+.team-card.active-team {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(245,200,66,0.3), inset 0 0 20px rgba(245,200,66,0.05);
+}
+.team-card.active-team::before { opacity: 1; }
+.team-name-display {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(14px, 2.5vw, 20px);
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.team-score-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(40px, 7vw, 70px);
+    line-height: 1;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(245,200,66,0.4);
+}
+.team-strikes-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    min-height: 28px;
+    align-items: center;
+    margin-top: 4px;
+}
+.strike-x {
+    font-size: 22px;
+    color: var(--red2);
+    font-weight: 900;
+    text-shadow: 0 0 12px rgba(255,68,68,0.8);
+    animation: strikeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes strikeIn {
+    from { transform: scale(0) rotate(-30deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.active-badge {
+    position: absolute;
+    top: -1px; left: 50%; transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--bg);
+    font-family: 'Oswald', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 2px 10px;
+    border-radius: 0 0 8px 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.team-card.active-team .active-badge { opacity: 1; }
+
+.scoreboard-center {
+    text-align: center;
+}
+.round-badge {
+    background: var(--panel);
+    border: 2px solid #2a3a6c;
+    border-radius: 50%;
+    width: 60px; height: 60px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin: 0 auto;
+}
+.round-badge span:first-child {
+    font-family: 'Oswald', sans-serif;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+}
+.round-badge span:last-child {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--gold);
+    line-height: 1;
+}
+
+/* ===== QUESTION ===== */
+.question-wrap {
+    max-width: 900px;
+    margin: 0 auto 12px;
+    padding: 0 16px;
+}
+.question-box {
+    background: var(--blue);
+    border-radius: 12px;
+    padding: 14px 24px;
+    text-align: center;
+    border: 2px solid var(--blue2);
+    box-shadow: 0 4px 20px rgba(26,58,143,0.4);
+}
+.question-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.question-text {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(16px, 3vw, 26px);
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.3;
+}
+
+/* ===== ANSWER BOARD ===== */
+.board-wrap {
+    max-width: 900px;
+    margin: 0 auto 12px;
+    padding: 0 16px;
+}
+.answers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+@media (max-width: 500px) {
+    .answers-grid { grid-template-columns: 1fr; }
+}
+
+.answer-tile {
+    height: 58px;
+    position: relative;
+    perspective: 1000px;
+    cursor: pointer;
+}
+.answer-tile-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 10px;
+}
+.answer-tile.revealed .answer-tile-inner {
+    transform: rotateY(180deg);
+}
+.answer-front, .answer-back {
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+}
+.answer-front {
+    background: linear-gradient(135deg, #0d2060, #162880);
+    border: 2px solid #1e3a8a;
+}
+.answer-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: rgba(255,255,255,0.25);
+    width: 32px;
+    flex-shrink: 0;
+}
+.answer-hidden-dots {
+    flex: 1;
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+.answer-hidden-dots span {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+}
+.answer-pts-hidden {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: rgba(245,200,66,0.4);
+}
+.answer-back {
+    background: linear-gradient(135deg, #1a3a8f, #2255cc);
+    border: 2px solid var(--teal);
+    transform: rotateY(180deg);
+    box-shadow: inset 0 0 20px rgba(0,200,212,0.1);
+}
+.answer-back-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: rgba(255,255,255,0.5);
+    width: 32px;
+    flex-shrink: 0;
+}
+.answer-back-text {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(13px, 2vw, 18px);
+    font-weight: 600;
+    color: #fff;
+    flex: 1;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 0 8px;
+    letter-spacing: 1px;
+}
+.answer-back-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(245,200,66,0.5);
+    min-width: 40px;
+    text-align: right;
+}
+
+/* ===== TIMER ===== */
+.timer-wrap {
+    max-width: 900px;
+    margin: 0 auto 10px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.timer-ring-wrap {
+    position: relative;
+    width: 52px; height: 52px;
+    flex-shrink: 0;
+}
+.timer-ring-wrap svg {
+    transform: rotate(-90deg);
+    width: 52px; height: 52px;
+}
+.timer-ring-bg { fill: none; stroke: #1a2a50; stroke-width: 4; }
+.timer-ring-fill {
+    fill: none;
+    stroke: var(--teal);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 138;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear, stroke 0.5s;
+}
+.timer-ring-fill.urgent { stroke: var(--red2); }
+.timer-number {
+    position: absolute;
+    inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: var(--white);
+}
+.timer-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: #1a2a50;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.timer-bar-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 4px;
+    transition: width 1s linear, background 0.5s;
+    width: 100%;
+}
+.timer-bar-fill.urgent { background: var(--red2); }
+.timer-status {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+    min-width: 60px;
+    text-align: right;
+}
+
+/* ===== INPUT ROW ===== */
+.input-row {
+    max-width: 900px;
+    margin: 0 auto 10px;
+    padding: 0 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.guess-input {
+    flex: 1;
+    background: var(--panel);
+    border: 2px solid #2a3a6c;
+    border-radius: 10px;
+    color: var(--white);
+    font-family: 'Nunito', sans-serif;
+    font-size: clamp(15px, 2.5vw, 20px);
+    font-weight: 700;
+    padding: 12px 18px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.guess-input:focus { border-color: var(--gold); }
+.guess-input::placeholder { color: var(--muted); font-weight: 400; }
+.btn-submit {
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: var(--bg);
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(14px, 2vw, 18px);
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    flex-shrink: 0;
+}
+.btn-submit:active { transform: scale(0.96); }
+.btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== CONTROLS ===== */
+.controls-row {
+    max-width: 900px;
+    margin: 0 auto 10px;
+    padding: 0 16px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.ctrl-btn {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(12px, 1.8vw, 15px);
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 9px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    flex: 1;
+    min-width: 80px;
+    text-transform: uppercase;
+}
+.ctrl-btn:active { transform: scale(0.96); }
+.ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ctrl-switch { background: #1a3a8f; color: #fff; border: 1px solid var(--blue2); }
+.ctrl-next { background: #1a3a8f; color: #fff; border: 1px solid var(--blue2); }
+.ctrl-reveal { background: #2a4a2a; color: #7aff7a; border: 1px solid #3a6a3a; }
+.ctrl-pause { background: #2a2a1a; color: var(--gold); border: 1px solid #5a5a20; }
+.ctrl-admin { background: #3a0a0a; color: #ff8888; border: 1px solid #6a1a1a; }
+.ctrl-newgame { background: #2a1a4a; color: #c084fc; border: 1px solid #4a2a7a; display:none; }
+
+/* ===== TIMEOUT BANNER ===== */
+.timeout-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: linear-gradient(135deg, var(--red), #aa1111);
+    color: #fff;
+    text-align: center;
+    padding: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(20px, 4vw, 32px);
+    letter-spacing: 4px;
+    z-index: 800;
+    transform: translateY(-100%);
     transition: transform 0.3s;
 }
-.team-score {
-    font-size: 2.5vw;
-    margin: 10px 0;
-}
-.current-team {
-    font-size: 2vw;
-    font-weight: bold;
-    margin: 10px 0;
-}
-.final-result {
-    font-size: 3vw;
-    color: #00ff00;
-    margin-top: 20px;
+.timeout-banner.show { transform: translateY(0); }
+
+/* ===== GAME OVER ===== */
+.game-over-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2,10,30,0.95);
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s;
+}
+.game-over-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+.game-over-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(60px, 14vw, 120px);
+    color: var(--gold);
+    letter-spacing: 10px;
+    text-shadow: 0 0 60px rgba(245,200,66,0.6);
+    animation: gameOverPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    line-height: 1;
+}
+.game-over-winner {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(22px, 5vw, 42px);
+    color: #fff;
+    margin: 10px 0;
+    letter-spacing: 3px;
+}
+.game-over-scores {
+    display: flex;
+    gap: 24px;
+    margin: 20px 0 30px;
+    justify-content: center;
+}
+.go-score-card {
+    background: var(--panel);
+    border-radius: 16px;
+    padding: 16px 28px;
+    border: 2px solid #2a3a6c;
+    min-width: 140px;
+}
+.go-score-card.winner-card {
+    border-color: var(--gold);
+    box-shadow: 0 0 30px rgba(245,200,66,0.3);
+}
+.go-team-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+}
+.go-team-pts {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    color: var(--gold);
+    line-height: 1;
+}
+@keyframes gameOverPop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
 }
 
-@keyframes pulseWin {
-  0% { transform: scale(1); color: #00ff00; text-shadow: 1px 1px #000; }
-  50% { transform: scale(1.2); color: #fff; text-shadow: 3px 3px #00ff00; }
-  100% { transform: scale(1); color: #00ff00; text-shadow: 1px 1px #000; }
+/* ===== CONFETTI CANVAS ===== */
+#confettiCanvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 950;
+    display: none;
 }
-.win-pulse { animation: pulseWin 1s infinite; }
 
-@keyframes winBgFlash {
-  0% { background-color: #020d26; }
-  50% { background-color: #004400; }
-  100% { background-color: #020d26; }
+/* ===== TEAM NAME SETUP ===== */
+.setup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2,10,30,0.97);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.win-background { animation: winBgFlash 1s infinite; }
+.setup-box {
+    background: var(--panel);
+    border: 2px solid var(--gold);
+    border-radius: 20px;
+    padding: 36px 40px;
+    text-align: center;
+    width: min(480px, 92vw);
+}
+.setup-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    margin-bottom: 6px;
+}
+.setup-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 24px;
+}
+.setup-team-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+.setup-team-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 16px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    width: 70px;
+    text-align: right;
+    flex-shrink: 0;
+}
+.setup-input {
+    flex: 1;
+    background: #0d1e40;
+    border: 2px solid #2a3a6c;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.setup-input:focus { border-color: var(--gold); }
+.setup-start-btn {
+    margin-top: 20px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: var(--bg);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 3px;
+    padding: 14px 48px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.1s;
+    width: 100%;
+}
+.setup-start-btn:active { transform: scale(0.97); }
 
-/* ========== ADMIN PANEL STYLES ========== */
+/* ===== CORRECT FLASH ===== */
+.correct-flash {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,200,212,0.12);
+    pointer-events: none;
+    z-index: 600;
+    opacity: 0;
+    transition: opacity 0.1s;
+}
+.correct-flash.show { opacity: 1; }
+
+/* ===== WRONG FLASH ===== */
+.wrong-flash {
+    position: fixed;
+    inset: 0;
+    background: rgba(204,34,34,0.18);
+    pointer-events: none;
+    z-index: 600;
+    opacity: 0;
+    transition: opacity 0.1s;
+}
+.wrong-flash.show { opacity: 1; }
+
+/* ===== ADMIN PANEL STYLES (preserved + styled) ===== */
 .admin-overlay {
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.92);
-    z-index: 1000;
+    background: rgba(0,0,0,0.95);
+    z-index: 2000;
     overflow-y: auto;
 }
 .admin-overlay.active { display: block; }
@@ -126,155 +649,183 @@ button {
     max-width: 900px;
     margin: 30px auto;
     padding: 30px;
-    background: #1a1a2e;
+    background: #0f1a35;
     border-radius: 16px;
-    border: 2px solid #ffd700;
+    border: 2px solid var(--gold);
     font-family: Arial, sans-serif;
 }
 .admin-panel h2 {
-    color: #ffd700;
+    color: var(--gold);
     text-align: center;
     margin-top: 0;
     font-size: 28px;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 4px;
 }
-.admin-panel h3 {
-    color: #ffcc00;
-    margin: 20px 0 10px;
-    font-size: 20px;
-}
+.admin-panel h3 { color: #ffcc00; margin: 20px 0 10px; font-size: 18px; }
 .admin-panel input, .admin-panel select {
-    font-size: 16px;
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #555;
-    background: #0f0f23;
-    color: #fff;
-    width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 8px;
+    font-size: 15px; padding: 10px; border-radius: 6px;
+    border: 1px solid #333; background: #071535; color: #fff;
+    width: 100%; box-sizing: border-box; margin-bottom: 8px;
 }
-.admin-panel input:focus { outline: 2px solid #ffd700; }
+.admin-panel input:focus { outline: 2px solid var(--gold); }
 .admin-panel button {
-    font-size: 15px;
-    padding: 10px 20px;
-    margin: 5px;
-    border-radius: 8px;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
+    font-size: 14px; padding: 9px 18px; margin: 4px;
+    border-radius: 8px; font-weight: bold; border: none; cursor: pointer;
 }
-.admin-btn-primary { background: #ffd700; color: #020d26; }
+.admin-btn-primary { background: var(--gold); color: var(--bg); }
 .admin-btn-danger { background: #cc3333; color: #fff; }
-.admin-btn-secondary { background: #555; color: #fff; }
+.admin-btn-secondary { background: #2a3a5c; color: #fff; }
 .admin-btn-success { background: #28a745; color: #fff; }
 .admin-question-card {
-    background: #0f0f23;
-    border: 1px solid #444;
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 12px;
+    background: #071535; border: 1px solid #2a3a5c;
+    border-radius: 10px; padding: 14px; margin-bottom: 10px;
 }
 .admin-question-card .q-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 8px;
 }
 .admin-question-card .q-header span {
-    color: #ffd700;
-    font-weight: bold;
-    font-size: 16px;
-    flex: 1;
-    margin-right: 10px;
+    color: var(--gold); font-weight: bold; font-size: 15px;
+    flex: 1; margin-right: 10px;
 }
 .admin-answer-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 6px;
+    display: flex; gap: 8px; align-items: center; margin-bottom: 6px;
 }
 .admin-answer-row input { margin-bottom: 0; }
 .admin-answer-row input:first-child { flex: 3; }
 .admin-answer-row input:nth-child(2) { flex: 1; max-width: 100px; }
 .admin-answer-row button { flex-shrink: 0; }
-.admin-password-gate {
-    text-align: center;
-    padding: 60px 20px;
-}
-.admin-password-gate input {
-    max-width: 300px;
-    margin: 10px auto;
-    display: block;
-    text-align: center;
-}
-.admin-password-gate button {
-    margin-top: 10px;
-}
+.admin-password-gate { text-align: center; padding: 60px 20px; }
+.admin-password-gate input { max-width: 300px; margin: 10px auto; display: block; text-align: center; }
 .admin-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #444;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+    padding-bottom: 15px; border-bottom: 1px solid #2a3a5c;
 }
 .admin-edit-form {
-    background: #162447;
-    border: 1px solid #ffd700;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
+    background: #0d2060; border: 1px solid var(--gold);
+    border-radius: 10px; padding: 20px; margin-bottom: 20px;
 }
 .admin-edit-form h3 { margin-top: 0; }
-.admin-msg {
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    text-align: center;
-    font-weight: bold;
-}
-.admin-msg-success { background: #28a74533; color: #28a745; border: 1px solid #28a745; }
-.admin-msg-error { background: #cc333333; color: #cc3333; border: 1px solid #cc3333; }
+.admin-msg { padding: 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; font-weight: bold; }
+.admin-msg-success { background: rgba(40,167,69,0.15); color: #28a745; border: 1px solid #28a745; }
+.admin-msg-error { background: rgba(204,51,51,0.15); color: #cc3333; border: 1px solid #cc3333; }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a3a5c; border-radius: 2px; }
 </style>
 </head>
 <body>
 
-<h1>FAMILY FEUD</h1>
-
-<div class="board">
-    <div class="team-score" id="teamScores">Team A: 0 | Team B: 0</div>
-    <h2 id="question"></h2>
-    <div class="answers" id="answers"></div>
-
-    <div>Strikes</div>
-    <div>Team A: <span id="strikesA"></span></div>
-    <div>Team B: <span id="strikesB"></span></div>
-
-    <div class="current-team" id="currentTeam"></div>
-
-    <div>Time Left for Current Guess: <span id="roundTimer">30</span>s</div>
-
-    <input id="guessInput" placeholder="Enter answer">
-    <br>
-    <button id="submitBtn" onclick="submitAnswer()">Submit</button>
-    <button id="pauseBtn" onclick="togglePause()">Pause</button>
-
-    <div class="controls">
-        <button id="switchBtn" onclick="switchTeam()">Switch Team</button>
-        <button id="nextBtn" onclick="nextQuestion()">Next Question</button>
-        <button id="revealBtn" onclick="revealAll()">Reveal All</button>
-        <button id="adminBtn" onclick="openAdmin()" style="background:#cc3333;color:#fff;">Admin Panel</button>
+<!-- TEAM SETUP OVERLAY -->
+<div class="setup-overlay" id="setupOverlay">
+    <div class="setup-box">
+        <div class="setup-title">FAMILY FEUD</div>
+        <div class="setup-sub">Enter team names to begin</div>
+        <div class="setup-team-row">
+            <span class="setup-team-label" style="color:#6ab0ff;">Team 1</span>
+            <input class="setup-input" id="teamAName" placeholder="Team A" maxlength="16" value="">
+        </div>
+        <div class="setup-team-row">
+            <span class="setup-team-label" style="color:#ff8888;">Team 2</span>
+            <input class="setup-input" id="teamBName" placeholder="Team B" maxlength="16" value="">
+        </div>
+        <button class="setup-start-btn" onclick="startGame()">LET'S PLAY!</button>
     </div>
+</div>
 
-    <div class="final-result" id="finalResult"></div>
+<!-- HEADER -->
+<div class="game-header">
+    <div class="game-title">FAMILY FEUD</div>
+    <div class="game-subtitle">Victoria Family Edition</div>
+    <div class="header-strip"></div>
+</div>
+
+<!-- SCOREBOARD -->
+<div class="scoreboard">
+    <div class="team-card team-a" id="teamCardA">
+        <div class="active-badge">PLAYING</div>
+        <div class="team-name-display" id="teamNameA">Team A</div>
+        <div class="team-score-display" id="scoreA">0</div>
+        <div class="team-strikes-row" id="strikesA"></div>
+    </div>
+    <div class="scoreboard-center">
+        <div class="round-badge">
+            <span>ROUND</span>
+            <span id="roundNum">1</span>
+        </div>
+    </div>
+    <div class="team-card team-b" id="teamCardB">
+        <div class="active-badge">PLAYING</div>
+        <div class="team-name-display" id="teamNameB">Team B</div>
+        <div class="team-score-display" id="scoreB">0</div>
+        <div class="team-strikes-row" id="strikesB"></div>
+    </div>
+</div>
+
+<!-- QUESTION -->
+<div class="question-wrap">
+    <div class="question-box">
+        <div class="question-label">Question</div>
+        <div class="question-text" id="questionText">Loading...</div>
+    </div>
+</div>
+
+<!-- ANSWER BOARD -->
+<div class="board-wrap">
+    <div class="answers-grid" id="answersGrid"></div>
+</div>
+
+<!-- TIMER -->
+<div class="timer-wrap">
+    <div class="timer-ring-wrap">
+        <svg viewBox="0 0 52 52">
+            <circle class="timer-ring-bg" cx="26" cy="26" r="22"/>
+            <circle class="timer-ring-fill" id="timerRing" cx="26" cy="26" r="22"/>
+        </svg>
+        <div class="timer-number" id="timerNum">30</div>
+    </div>
+    <div class="timer-bar-wrap">
+        <div class="timer-bar-fill" id="timerBar"></div>
+    </div>
+    <div class="timer-status" id="timerStatus">READY</div>
+</div>
+
+<!-- INPUT ROW -->
+<div class="input-row">
+    <input class="guess-input" id="guessInput" placeholder="Type your answer..." autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="btn-submit" id="submitBtn" onclick="submitAnswer()">SUBMIT</button>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls-row">
+    <button class="ctrl-btn ctrl-switch" onclick="switchTeam()">⇄ Switch</button>
+    <button class="ctrl-btn ctrl-next" id="nextBtn" onclick="nextQuestion()">Next ▶</button>
+    <button class="ctrl-btn ctrl-reveal" onclick="revealAll()">👁 Reveal All</button>
+    <button class="ctrl-btn ctrl-pause" id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+    <button class="ctrl-btn ctrl-admin" onclick="openAdmin()">⚙ Admin</button>
+    <button class="ctrl-btn ctrl-newgame" id="newGameBtn" onclick="newGame()">↺ New Game</button>
+</div>
+
+<!-- OVERLAYS -->
+<div class="timeout-banner" id="timeoutBanner"></div>
+<div class="correct-flash" id="correctFlash"></div>
+<div class="wrong-flash" id="wrongFlash"></div>
+
+<!-- GAME OVER -->
+<div class="game-over-overlay" id="gameOverOverlay">
+    <div class="game-over-title" id="gameOverTitle">GAME OVER</div>
+    <div class="game-over-winner" id="gameOverWinner"></div>
+    <div class="game-over-scores" id="gameOverScores"></div>
+    <button class="ctrl-btn ctrl-newgame" style="display:block;width:200px;margin:0 auto;font-size:18px;padding:14px;" onclick="newGame()">↺ Play Again</button>
 </div>
 
 <!-- ADMIN PANEL OVERLAY -->
 <div class="admin-overlay" id="adminOverlay">
     <div class="admin-panel">
-        <!-- Password Gate -->
         <div id="adminPasswordGate" class="admin-password-gate">
             <h2>ADMIN LOGIN</h2>
             <p style="color:#aaa;">Enter the admin password to manage questions.</p>
@@ -284,15 +835,14 @@ button {
             <button class="admin-btn-secondary" onclick="closeAdmin()">Cancel</button>
             <div id="adminPasswordError"></div>
         </div>
-        <!-- Main Admin Content (hidden until authenticated) -->
         <div id="adminContent" style="display:none;">
             <h2>QUESTION MANAGER</h2>
             <div id="adminMsg"></div>
             <div class="admin-toolbar">
                 <div>
-                    <button class="admin-btn-success" onclick="showAddForm()">+ Add New Question</button>
-                    <button class="admin-btn-danger" onclick="deleteAllQuestions()">Delete All Questions</button>
-                    <button class="admin-btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                    <button class="admin-btn-success" onclick="showAddForm()">+ Add Question</button>
+                    <button class="admin-btn-danger" onclick="deleteAllQuestions()">Delete All</button>
+                    <button class="admin-btn-secondary" onclick="resetToDefaults()">Reset Defaults</button>
                     <button class="admin-btn-secondary" onclick="showChangePassword()" style="background:#6a5acd;color:#fff;">Change Password</button>
                 </div>
                 <div>
@@ -300,389 +850,473 @@ button {
                     <button class="admin-btn-secondary" onclick="closeAdmin()">Cancel</button>
                 </div>
             </div>
-            <!-- Add/Edit Form Area -->
             <div id="adminEditArea"></div>
-            <!-- Question List -->
             <h3>Current Questions (<span id="adminQuestionCount">0</span>)</h3>
             <div id="adminQuestionList"></div>
         </div>
     </div>
 </div>
 
-<!-- SOUND EFFECTS -->
-<audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
-<audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
-<audio id="revealSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
-<audio id="teamSwitchSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+<canvas id="confettiCanvas"></canvas>
 
 <script>
+/* ============================================================
+   GAME DATA
+   ============================================================ */
 const defaultGameData = [
-{
-
-        question: "Who is the Tarsier in the Family?",
-        answers: [
-            { text: "Tita Ella", points: 20, revealed: false },
-            { text: "Ate Anne", points: 12, revealed: false },
-            { text: "Dr Joy", points: 8, revealed: false },
-            { text: "Mommy Nene", points: 6, revealed: false },
-            { text: "Judge Grace", points: 5, revealed: false },
-            { text: "Ninang Glo", points: 4, revealed: false },
-            { text: "Bastik", points: 2, revealed: false },
-            { text: "All Girls", points: 1, revealed: false }
-        ]
-    },
-    {
-        question: "Who is the Quietest member?",
-        answers: [
-            { text: "Tito Adows", points: 15, revealed: false },
-            { text: "Tito Basil", points: 12, revealed: false },
-            { text: "None", points: 8, revealed: false },
-            { text: "Tito Mon", points: 6, revealed: false },
-            { text: "Vincent", points: 4, revealed: false },
-            { text: "Nina", points: 3, revealed: false },
-            { text: "Moana", points: 2, revealed: false }
-        ]
-    },
-    {
-        question: "Name a phrase or expression that Daddy Pepe is famous for saying.",
-        answers: [
-            { text: "whatever!", points: 20, revealed: false },
-            { text: "my pabs", points: 16, revealed: false },
-            { text: "ha! Ha!", points: 12, revealed: false },
-            { text: "consistent lang", points: 7, revealed: false },
-            { text: "Isa pa. pang delete", points: 5, revealed: false },
-            { text: "Love, Daddy Pepe", points: 5, revealed: false },
-            { text: "No Problem!", points: 3, revealed: false }
-        ]
-    },
-    {
-        question: "Name one Famous Song which is special to the Victoria Family",
-        answers: [
-            { text: "L-O-V-E", points: 20, revealed: false },
-            { text: "Angelina", points: 18, revealed: false },
-            { text: "My Girl/Dad", points: 14, revealed: false },
-            { text: "I want it that way", points: 10, revealed: false },
-            { text: "An Affair to Remember/A love Affair", points: 8, revealed: false },
-            { text: "Tanging Yaman", points: 6, revealed: false },
-            { text: "Sound of Music", points: 4, revealed: false }
-        ]
-    },
-    {
-        question: "Name One Skill that the Victoria Family will win a gold medal in?",
-        answers: [
-            { text: "Cooking", points: 15, revealed: false },
-            { text: "Dancing", points: 10, revealed: false },
-            { text: "Eating", points: 9, revealed: false },
-            { text: "Debating", points: 7, revealed: false },
-            { text: "Bashing", points: 5, revealed: false },
-            { text: "Singing", points: 3, revealed: false },
-            { text: "Best Dressed/Dressing Up", points: 2, revealed: false }
-        ]
-    },
-    {
-        question: "Name a food that is always present at our family gatherings",
-        answers: [
-            { text: "Fried Chicken", points: 20, revealed: false },
-            { text: "Rice", points: 15, revealed: false },
-            { text: "Kare-Kare", points: 13, revealed: false },
-            { text: "Paes/Fish", points: 11, revealed: false },
-            { text: "Longganisa", points: 10, revealed: false },
-            { text: "Menudo", points: 8, revealed: false },
-            { text: "Lechon", points: 7, revealed: false }
-        ]
-    },
-    {
-        question: "Name one item that can be found in Daddy Pepe's house.",
-        answers: [
-            { text: "pieta", points: 21, revealed: false },
-            { text: "pictures", points: 16, revealed: false },
-            { text: "rocking chair", points: 8, revealed: false },
-            { text: "back scratcher/pangkamot", points: 4, revealed: false },
-            { text: "hospital bed", points: 4, revealed: false },
-            { text: "hats", points: 3, revealed: false }
-        ]
-    },
-    {
-        question: "Name a reason why a family gathering might go past midnight?",
-        answers: [
-            { text: "Stories/Chikahan", points: 12, revealed: false },
-            { text: "Drinks/Inuman", points: 10, revealed: false },
-            { text: "Karaoke/Videoke", points: 8, revealed: false },
-            { text: "Movies/Netflix/Horror Movies", points: 6, revealed: false },
-            { text: "Board Games", points: 5, revealed: false },
-            { text: "Food", points: 4, revealed: false }
-        ]
-    },
-    {
-        question: "If the Family started a singing group, who would be the lead singer?",
-        answers: [
-            { text: "Tita Bong", points: 12, revealed: false },
-            { text: "Korina", points: 10, revealed: false },
-            { text: "Dr Joy", points: 8, revealed: false },
-            { text: "Ate Anne", points: 6, revealed: false },
-            { text: "Aimee", points: 6, revealed: false },
-            { text: "Amanda", points: 6, revealed: false }
-        ]
-    },
-    {
-        question: "Who is the \"official photographer\" of the family?",
-        answers: [
-            { text: "Tita Ella", points: 17, revealed: false },
-            { text: "Tito Ben", points: 12, revealed: false },
-            { text: "Tita Bong", points: 10, revealed: false },
-            { text: "Dr Joy", points: 8, revealed: false },
-            { text: "Tito Jess", points: 6, revealed: false },
-            { text: "Justin", points: 4, revealed: false }
-        ]
-    },
-    {
-        question: "Which family member is most likely to start a Karaoke session?",
-        answers: [
-            { text: "Tita Bong", points: 20, revealed: false },
-            { text: "Korina/Jenny", points: 18, revealed: false },
-            { text: "Aimee", points: 8, revealed: false },
-            { text: "Tita May", points: 6, revealed: false },
-            { text: "Ryanne", points: 4, revealed: false }
-        ]
-    },
-    {
-        question: "Name a specific gift or pasalubong you'd expect from a family member coming home from abroad?",
-        answers: [
-            { text: "chocolates", points: 14, revealed: false },
-            { text: "keychain", points: 10, revealed: false },
-            { text: "magnet", points: 8, revealed: false },
-            { text: "vitamins", points: 6, revealed: false },
-            { text: "ziplock/cling wrap", points: 4, revealed: false }
-        ]
-    },
-    {
-        question: "What is the most common/classic profession within the Victoria family?",
-        answers: [
-            { text: "Teacher/Education", points: 20, revealed: false },
-            { text: "Lawyer/Law", points: 15, revealed: false },
-            { text: "Accountant/Accounting", points: 10, revealed: false },
-            { text: "Government/Civil Service", points: 6, revealed: false }
-        ]
-    },
-    {
-        question: "Name the family member who is most likely to win a debate or argument.",
-        answers: [
-            { text: "Judge Grace", points: 14, revealed: false },
-            { text: "Tito Jess", points: 13, revealed: false },
-            { text: "Atty Glo", points: 8, revealed: false },
-            { text: "Atty Kix", points: 7, revealed: false }
-        ]
-    },
-    {
-        question: "What is the one thing which a family member living abroad misses the most?",
-        answers: [
-            { text: "Food/Kainan", points: 20, revealed: false },
-            { text: "Family/Bonding", points: 18, revealed: false },
-            { text: "Christmas", points: 15, revealed: false }
-        ]
-    },
-    {
-        question: "Who is the funniest family member?",
-        answers: [
-            { text: "Kix/Kiko/Francis", points: 10, revealed: false },
-            { text: "Jess", points: 10, revealed: false },
-            { text: "Jovy", points: 5, revealed: false }
-        ]
-    },
-    {
-        question: "Who is the family \"tech support\" - the person everyone goes to when their phone or wifi isn't working?",
-        answers: [
-            { text: "Tito Jess", points: 12, revealed: false },
-            { text: "Justin", points: 10, revealed: false },
-            { text: "Jewel", points: 8, revealed: false }
-        ]
-    },
-    {
-        question: "Name a country, other than the Philippines, where many of our relatives live.",
-        answers: [
-            { text: "Canada", points: 15, revealed: false },
-            { text: "Australia", points: 12, revealed: false }
-        ]
-    }
+    { question: "Who is the Tarsier in the Family?", answers: [
+        { text: "Tita Ella", points: 20 }, { text: "Ate Anne", points: 12 },
+        { text: "Dr Joy", points: 8 }, { text: "Mommy Nene", points: 6 },
+        { text: "Judge Grace", points: 5 }, { text: "Ninang Glo", points: 4 },
+        { text: "Bastik", points: 2 }, { text: "All Girls", points: 1 }
+    ]},
+    { question: "Who is the Quietest member?", answers: [
+        { text: "Tito Adows", points: 15 }, { text: "Tito Basil", points: 12 },
+        { text: "None", points: 8 }, { text: "Tito Mon", points: 6 },
+        { text: "Vincent", points: 4 }, { text: "Nina", points: 3 }, { text: "Moana", points: 2 }
+    ]},
+    { question: "Name a phrase or expression that Daddy Pepe is famous for saying.", answers: [
+        { text: "whatever!", points: 20 }, { text: "my pabs", points: 16 },
+        { text: "ha! Ha!", points: 12 }, { text: "consistent lang", points: 7 },
+        { text: "Isa pa. pang delete", points: 5 }, { text: "Love, Daddy Pepe", points: 5 },
+        { text: "No Problem!", points: 3 }
+    ]},
+    { question: "Name one Famous Song which is special to the Victoria Family", answers: [
+        { text: "L-O-V-E", points: 20 }, { text: "Angelina", points: 18 },
+        { text: "My Girl/Dad", points: 14 }, { text: "I want it that way", points: 10 },
+        { text: "An Affair to Remember", points: 8 }, { text: "Tanging Yaman", points: 6 },
+        { text: "Sound of Music", points: 4 }
+    ]},
+    { question: "Name One Skill that the Victoria Family will win a gold medal in?", answers: [
+        { text: "Cooking", points: 15 }, { text: "Dancing", points: 10 },
+        { text: "Eating", points: 9 }, { text: "Debating", points: 7 },
+        { text: "Bashing", points: 5 }, { text: "Singing", points: 3 },
+        { text: "Best Dressed", points: 2 }
+    ]},
+    { question: "Name a food that is always present at our family gatherings", answers: [
+        { text: "Fried Chicken", points: 20 }, { text: "Rice", points: 15 },
+        { text: "Kare-Kare", points: 13 }, { text: "Paes/Fish", points: 11 },
+        { text: "Longganisa", points: 10 }, { text: "Menudo", points: 8 }, { text: "Lechon", points: 7 }
+    ]},
+    { question: "Name one item that can be found in Daddy Pepe's house.", answers: [
+        { text: "Pieta", points: 21 }, { text: "Pictures", points: 16 },
+        { text: "Rocking chair", points: 8 }, { text: "Back scratcher", points: 4 },
+        { text: "Hospital bed", points: 4 }, { text: "Hats", points: 3 }
+    ]},
+    { question: "Name a reason why a family gathering might go past midnight?", answers: [
+        { text: "Stories/Chikahan", points: 12 }, { text: "Drinks/Inuman", points: 10 },
+        { text: "Karaoke/Videoke", points: 8 }, { text: "Movies/Netflix", points: 6 },
+        { text: "Board Games", points: 5 }, { text: "Food", points: 4 }
+    ]},
+    { question: "If the Family started a singing group, who would be the lead singer?", answers: [
+        { text: "Tita Bong", points: 12 }, { text: "Korina", points: 10 },
+        { text: "Dr Joy", points: 8 }, { text: "Ate Anne", points: 6 },
+        { text: "Aimee", points: 6 }, { text: "Amanda", points: 6 }
+    ]},
+    { question: "Who is the \"official photographer\" of the family?", answers: [
+        { text: "Tita Ella", points: 17 }, { text: "Tito Ben", points: 12 },
+        { text: "Tita Bong", points: 10 }, { text: "Dr Joy", points: 8 },
+        { text: "Tito Jess", points: 6 }, { text: "Justin", points: 4 }
+    ]},
+    { question: "Which family member is most likely to start a Karaoke session?", answers: [
+        { text: "Tita Bong", points: 20 }, { text: "Korina/Jenny", points: 18 },
+        { text: "Aimee", points: 8 }, { text: "Tita May", points: 6 }, { text: "Ryanne", points: 4 }
+    ]},
+    { question: "Name a country, other than the Philippines, where many of our relatives live.", answers: [
+        { text: "Canada", points: 15 }, { text: "Australia", points: 12 }
+    ]}
 ];
 
-// Load from localStorage if saved, otherwise use defaults
-let gameData = JSON.parse(localStorage.getItem('familyFeudQuestions')) || JSON.parse(JSON.stringify(defaultGameData));
+let gameData = JSON.parse(localStorage.getItem('familyFeudQuestions') || 'null');
+if (!gameData) gameData = JSON.parse(JSON.stringify(defaultGameData));
+gameData.forEach(q => q.answers.forEach(a => a.revealed = false));
 
 let currentQuestionIndex = 0;
 let currentTeam = "A";
-let strikes = {A:0, B:0};
-let teamPoints = {A:0, B:0};
+let strikes = { A: 0, B: 0 };
+let teamPoints = { A: 0, B: 0 };
+let teamNames = { A: "Team A", B: "Team B" };
 const maxStrikes = 3;
-let roundTime = 30; 
-let timerInterval;
+let roundTime = 30;
+let timerMax = 30;
+let timerInterval = null;
 let timerPaused = false;
+let gameOver = false;
 
-const correctSound = document.getElementById("correctSound");
-const wrongSound = document.getElementById("wrongSound");
-const revealSound = document.getElementById("revealSound");
-const teamSwitchSound = document.getElementById("teamSwitchSound");
+/* ============================================================
+   SETUP
+   ============================================================ */
+document.getElementById("teamAName").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("teamBName").focus(); });
+document.getElementById("teamBName").addEventListener("keydown", e => { if (e.key === "Enter") startGame(); });
 
+function startGame() {
+    const a = document.getElementById("teamAName").value.trim();
+    const b = document.getElementById("teamBName").value.trim();
+    teamNames.A = a || "Team A";
+    teamNames.B = b || "Team B";
+    document.getElementById("teamNameA").textContent = teamNames.A;
+    document.getElementById("teamNameB").textContent = teamNames.B;
+    document.getElementById("setupOverlay").style.display = "none";
+    loadQuestion();
+    soundReady();
+}
+
+function newGame() {
+    document.getElementById("gameOverOverlay").classList.remove("show");
+    stopConfetti();
+    currentQuestionIndex = 0;
+    currentTeam = "A";
+    strikes = { A: 0, B: 0 };
+    teamPoints = { A: 0, B: 0 };
+    gameOver = false;
+    gameData.forEach(q => q.answers.forEach(a => a.revealed = false));
+    document.getElementById("guessInput").disabled = false;
+    document.getElementById("submitBtn").disabled = false;
+    document.querySelectorAll(".ctrl-btn:not(.ctrl-newgame)").forEach(b => b.disabled = false);
+    document.getElementById("newGameBtn").style.display = "none";
+    document.getElementById("setupOverlay").style.display = "flex";
+}
+
+/* ============================================================
+   GAME LOGIC
+   ============================================================ */
 function loadQuestion() {
     const q = gameData[currentQuestionIndex];
-    q.answers.forEach(a=>a.revealed=false);
-    strikes={A:0,B:0};
-    document.getElementById("finalResult").innerText="";
-    document.body.classList.remove("win-background");
+    q.answers.forEach(a => a.revealed = false);
+    strikes = { A: 0, B: 0 };
+    document.getElementById("roundNum").textContent = currentQuestionIndex + 1;
     renderBoard();
     resetTimer();
 }
 
 function renderBoard() {
     const q = gameData[currentQuestionIndex];
-    document.getElementById("question").innerText = q.question;
+    document.getElementById("questionText").textContent = q.question;
 
-    const answersDiv = document.getElementById("answers");
-    answersDiv.innerHTML="";
-    q.answers.forEach((a,i)=>{
-        const div=document.createElement("div");
-        div.className="answer "+(a.revealed?"revealed":"");
-        div.innerHTML=`<div class="front"><span>${i+1}. __________</span><span>${a.points}</span></div>
-                       <div class="back"><span>${i+1}. ${a.text.toUpperCase()}</span><span>${a.points}</span></div>`;
-        answersDiv.appendChild(div);
+    const grid = document.getElementById("answersGrid");
+    grid.innerHTML = "";
+    q.answers.forEach((a, i) => {
+        const tile = document.createElement("div");
+        tile.className = "answer-tile" + (a.revealed ? " revealed" : "");
+        tile.innerHTML = `
+            <div class="answer-tile-inner">
+                <div class="answer-front">
+                    <span class="answer-num">${i + 1}</span>
+                    <div class="answer-hidden-dots">
+                        ${Array(Math.min(a.text.length, 8)).fill('<span></span>').join('')}
+                    </div>
+                    <span class="answer-pts-hidden">${a.points}</span>
+                </div>
+                <div class="answer-back">
+                    <span class="answer-back-num">${i + 1}</span>
+                    <span class="answer-back-text">${a.text.toUpperCase()}</span>
+                    <span class="answer-back-pts">${a.points}</span>
+                </div>
+            </div>`;
+        grid.appendChild(tile);
     });
 
-    ["A","B"].forEach(t=>{
-        document.getElementById("strikes"+t).innerHTML="❌ ".repeat(strikes[t]);
+    // Strikes
+    ["A", "B"].forEach(t => {
+        const el = document.getElementById("strikes" + t);
+        el.innerHTML = "";
+        for (let i = 0; i < strikes[t]; i++) {
+            const x = document.createElement("span");
+            x.className = "strike-x";
+            x.textContent = "✕";
+            el.appendChild(x);
+        }
     });
 
-    document.getElementById("currentTeam").innerText=`Current Team: Team ${currentTeam}`;
-    document.getElementById("teamScores").innerText=`Team A: ${teamPoints.A} | Team B: ${teamPoints.B}`;
+    // Active team
+    document.getElementById("teamCardA").classList.toggle("active-team", currentTeam === "A");
+    document.getElementById("teamCardB").classList.toggle("active-team", currentTeam === "B");
+    document.getElementById("scoreA").textContent = teamPoints.A;
+    document.getElementById("scoreB").textContent = teamPoints.B;
 }
 
-document.getElementById("guessInput").addEventListener("keydown", function(e){
-    if(e.key==="Enter") submitAnswer();
+document.getElementById("guessInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") submitAnswer();
 });
 
-/* ========== RELAXED MATCHING ========== */
-function normalize(str){
-    return str.toLowerCase().replace(/[^a-z0-9 ]/g,"").trim();
+function normalize(str) {
+    return str.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+}
+function levenshtein(a, b) {
+    const m = Array.from({ length: b.length + 1 }, (_, i) => [i]);
+    for (let j = 0; j <= a.length; j++) m[0][j] = j;
+    for (let i = 1; i <= b.length; i++)
+        for (let j = 1; j <= a.length; j++)
+            m[i][j] = Math.min(m[i-1][j]+1, m[i][j-1]+1, m[i-1][j-1]+(a[j-1]===b[i-1]?0:1));
+    return m[b.length][a.length];
+}
+function similarity(a, b) { return 1 - levenshtein(a, b) / Math.max(a.length, b.length); }
+function isRelaxedMatch(answer, guess) {
+    const a = normalize(answer), g = normalize(guess);
+    return a.includes(g) || similarity(a, g) >= 0.6;
 }
 
-function levenshtein(a,b){
-    const matrix = Array.from({length:b.length+1},(_,i)=>[i]);
-    for(let j=0;j<=a.length;j++) matrix[0][j]=j;
-    for(let i=1;i<=b.length;i++){
-        for(let j=1;j<=a.length;j++){
-            matrix[i][j]=Math.min(
-                matrix[i-1][j]+1,
-                matrix[i][j-1]+1,
-                matrix[i-1][j-1]+(a[j-1]===b[i-1]?0:1)
-            );
+function submitAnswer() {
+    if (gameOver) return;
+    const input = document.getElementById("guessInput");
+    const guess = input.value.trim();
+    input.value = "";
+    if (!guess) return;
+    resetTimer();
+
+    const q = gameData[currentQuestionIndex];
+    const match = q.answers.find(a => !a.revealed && isRelaxedMatch(a.text, guess));
+
+    if (match) {
+        match.revealed = true;
+        teamPoints[currentTeam] += match.points;
+        soundCorrect();
+        flashScreen("correct");
+        renderBoard();
+    } else {
+        strikes[currentTeam]++;
+        soundWrong();
+        flashScreen("wrong");
+        renderBoard();
+        if (strikes[currentTeam] >= maxStrikes) {
+            setTimeout(() => switchTeam(), 400);
         }
     }
-    return matrix[b.length][a.length];
 }
 
-function similarity(a,b){
-    const dist = levenshtein(a,b);
-    return 1 - dist / Math.max(a.length,b.length);
+function switchTeam() {
+    currentTeam = currentTeam === "A" ? "B" : "A";
+    soundSwitch();
+    renderBoard();
+    resetTimer();
 }
 
-function isRelaxedMatch(answer, guess){
-    const a = normalize(answer);
-    const g = normalize(guess);
-    if(a.includes(g)) return true;  // partial match
-    if(similarity(a,g) >= 0.6) return true; // fuzzy match
-    return false;
-}
-
-function submitAnswer(){
-    resetTimer(); 
-    const input=document.getElementById("guessInput");
-    const guess=input.value.trim();
-    input.value="";
-    if(!guess) return;
-
-    const q=gameData[currentQuestionIndex];
-    const match=q.answers.find(a=>!a.revealed && isRelaxedMatch(a.text, guess));
-
-    if(match){
-        match.revealed=true;
-        teamPoints[currentTeam]+=match.points;
-        correctSound.play(); renderBoard();
-    }else{
-        strikes[currentTeam]++;
-        wrongSound.play();
-        const el=document.getElementById("strikes"+currentTeam);
-        el.style.transform="scale(1.5)";
-        setTimeout(()=>el.style.transform="scale(1)",300);
-        if(strikes[currentTeam]>=maxStrikes){ switchTeam();}
-        renderBoard();
-    }
-}
-
-function switchTeam(){
-    currentTeam=currentTeam==="A"?"B":"A";
-    teamSwitchSound.play(); renderBoard(); resetTimer();
-}
-
-function nextQuestion(){
+function nextQuestion() {
     currentQuestionIndex++;
-    if(currentQuestionIndex>=gameData.length){
-        clearInterval(timerInterval);
-        let winner="";
-        if(teamPoints.A>teamPoints.B) winner="Team A Wins!";
-        else if(teamPoints.B>teamPoints.A) winner="Team B Wins!";
-        else winner="It's a Tie!";
-        const finalEl=document.getElementById("finalResult");
-        finalEl.innerText=`GAME OVER\n${winner}\nFinal Scores - Team A: ${teamPoints.A} | Team B: ${teamPoints.B}`;
-        finalEl.classList.add("win-pulse");
-        document.body.classList.add("win-background");
-        document.getElementById("guessInput").disabled=true;
-        document.querySelectorAll("button").forEach(b=>b.disabled=true);
-        document.getElementById("currentTeam").innerText="GAME OVER";
+    if (currentQuestionIndex >= gameData.length) {
+        endGame();
         return;
     }
-    loadQuestion(); 
+    loadQuestion();
 }
 
-function revealAll(){
-    const q=gameData[currentQuestionIndex];
-    q.answers.forEach(a=>a.revealed=true);
-    revealSound.play(); renderBoard();
+function revealAll() {
+    const q = gameData[currentQuestionIndex];
+    q.answers.forEach(a => a.revealed = true);
+    soundReveal();
+    renderBoard();
 }
 
-function startTimer(){
-    document.getElementById("roundTimer").innerText = roundTime;
+function endGame() {
+    clearInterval(timerInterval);
+    gameOver = true;
+    document.getElementById("guessInput").disabled = true;
+    document.getElementById("submitBtn").disabled = true;
+    document.querySelectorAll(".ctrl-btn:not(.ctrl-newgame)").forEach(b => {
+        if (!b.classList.contains("ctrl-admin")) b.disabled = true;
+    });
+    document.getElementById("newGameBtn").style.display = "block";
+
+    let winner = "", winnerTeam = "";
+    if (teamPoints.A > teamPoints.B) { winner = teamNames.A + " WINS!"; winnerTeam = "A"; }
+    else if (teamPoints.B > teamPoints.A) { winner = teamNames.B + " WINS!"; winnerTeam = "B"; }
+    else { winner = "IT'S A TIE!"; }
+
+    document.getElementById("gameOverWinner").textContent = winner;
+
+    const scoresHtml = `
+        <div class="go-score-card ${winnerTeam === 'A' ? 'winner-card' : ''}">
+            <div class="go-team-name">${teamNames.A}</div>
+            <div class="go-team-pts">${teamPoints.A}</div>
+        </div>
+        <div class="go-score-card ${winnerTeam === 'B' ? 'winner-card' : ''}">
+            <div class="go-team-name">${teamNames.B}</div>
+            <div class="go-team-pts">${teamPoints.B}</div>
+        </div>`;
+    document.getElementById("gameOverScores").innerHTML = scoresHtml;
+    document.getElementById("gameOverOverlay").classList.add("show");
+    soundFanfare();
+    launchConfetti();
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+function startTimer() {
     clearInterval(timerInterval);
     timerPaused = false;
-    timerInterval = setInterval(()=>{
-        if(!timerPaused){
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+        if (!timerPaused && !gameOver) {
             roundTime--;
-            document.getElementById("roundTimer").innerText = roundTime;
-            if(roundTime <= 0){
+            updateTimerDisplay();
+            if (roundTime <= 0) {
                 clearInterval(timerInterval);
-                alert(`Time's up for Team ${currentTeam}! Counting as a wrong attempt.`);
-                strikes[currentTeam]++;
-                renderBoard();
-                if(strikes[currentTeam]>=maxStrikes){ switchTeam(); }
-                resetTimer(); 
+                onTimeout();
             }
         }
-    },1000);
+    }, 1000);
 }
 
-function resetTimer(){
-    roundTime = 30; 
+function updateTimerDisplay() {
+    const pct = roundTime / timerMax;
+    const circumference = 138;
+    document.getElementById("timerRing").style.strokeDashoffset = circumference * (1 - pct);
+    document.getElementById("timerBar").style.width = (pct * 100) + "%";
+    document.getElementById("timerNum").textContent = roundTime;
+    const urgent = roundTime <= 8;
+    document.getElementById("timerRing").classList.toggle("urgent", urgent);
+    document.getElementById("timerBar").classList.toggle("urgent", urgent);
+    document.getElementById("timerStatus").textContent = timerPaused ? "PAUSED" : (roundTime + "s");
+}
+
+function resetTimer() {
+    roundTime = timerMax;
     startTimer();
 }
 
-function togglePause(){
-    timerPaused = !timerPaused;
-    document.getElementById("pauseBtn").innerText = timerPaused ? "Resume" : "Pause";
+function onTimeout() {
+    if (gameOver) return;
+    const banner = document.getElementById("timeoutBanner");
+    banner.textContent = `⏱ TIME'S UP — ${(currentTeam === "A" ? teamNames.A : teamNames.B).toUpperCase()} — STRIKE!`;
+    banner.classList.add("show");
+    soundWrong();
+    strikes[currentTeam]++;
+    renderBoard();
+    setTimeout(() => {
+        banner.classList.remove("show");
+        if (strikes[currentTeam] >= maxStrikes) switchTeam();
+        else resetTimer();
+    }, 2500);
 }
 
-/* ========== ADMIN PANEL ========== */
+function togglePause() {
+    timerPaused = !timerPaused;
+    document.getElementById("pauseBtn").textContent = timerPaused ? "▶ Resume" : "⏸ Pause";
+    updateTimerDisplay();
+}
+
+/* ============================================================
+   FLASH EFFECTS
+   ============================================================ */
+function flashScreen(type) {
+    const el = document.getElementById(type + "Flash");
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 200);
+}
+
+/* ============================================================
+   SOUNDS (Web Audio API)
+   ============================================================ */
+let audioCtx = null;
+function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+function tone(freq, type, duration, gain, start) {
+    const ctx = getCtx();
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.connect(g); g.connect(ctx.destination);
+    osc.type = type; osc.frequency.setValueAtTime(freq, start);
+    g.gain.setValueAtTime(gain, start);
+    g.gain.exponentialRampToValueAtTime(0.001, start + duration);
+    osc.start(start); osc.stop(start + duration);
+}
+function soundReady() {
+    const ctx = getCtx(), t = ctx.currentTime;
+    [440, 554, 659].forEach((f, i) => tone(f, 'triangle', 0.2, 0.2, t + i * 0.1));
+}
+function soundCorrect() {
+    const ctx = getCtx(), t = ctx.currentTime;
+    tone(523, 'sine', 0.08, 0.3, t);
+    tone(659, 'sine', 0.12, 0.3, t + 0.06);
+    tone(784, 'sine', 0.18, 0.25, t + 0.12);
+}
+function soundWrong() {
+    const ctx = getCtx(), t = ctx.currentTime;
+    tone(220, 'sawtooth', 0.08, 0.3, t);
+    tone(196, 'sawtooth', 0.12, 0.3, t + 0.08);
+    tone(165, 'sawtooth', 0.2, 0.25, t + 0.16);
+}
+function soundSwitch() {
+    const ctx = getCtx(), t = ctx.currentTime;
+    [330, 440, 330].forEach((f, i) => tone(f, 'triangle', 0.12, 0.2, t + i * 0.08));
+}
+function soundReveal() {
+    const ctx = getCtx(), t = ctx.currentTime;
+    [523, 587, 659, 698, 784].forEach((f, i) => tone(f, 'sine', 0.15, 0.2, t + i * 0.07));
+}
+function soundFanfare() {
+    const ctx = getCtx(), t = ctx.currentTime;
+    const notes = [523, 659, 784, 1047, 784, 1047, 1047, 1319];
+    notes.forEach((f, i) => tone(f, 'triangle', 0.3, 0.35, t + i * 0.13));
+    for (let i = 0; i < 5; i++) {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(80, t + i * 0.22);
+        o.frequency.exponentialRampToValueAtTime(20, t + i * 0.22 + 0.15);
+        g.gain.setValueAtTime(0.3, t + i * 0.22);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.22 + 0.18);
+        o.start(t + i * 0.22); o.stop(t + i * 0.22 + 0.2);
+    }
+}
+
+/* ============================================================
+   CONFETTI
+   ============================================================ */
+let confettiParts = [], confRAF = null;
+const CC = ['#f5c842','#ff5e8a','#00c8d4','#3b82f6','#a855f7','#22c55e','#fff','#ff8c42'];
+
+function launchConfetti() {
+    const canvas = document.getElementById("confettiCanvas");
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    canvas.style.display = "block";
+    confettiParts = [];
+    for (let i = 0; i < 200; i++) {
+        confettiParts.push({
+            x: Math.random() * canvas.width, y: -10 - Math.random() * 300,
+            w: 7 + Math.random() * 9, h: 11 + Math.random() * 7,
+            color: CC[Math.floor(Math.random() * CC.length)],
+            vx: (Math.random() - 0.5) * 5, vy: 2 + Math.random() * 5,
+            rot: Math.random() * 360, rotV: (Math.random() - 0.5) * 10
+        });
+    }
+    if (confRAF) cancelAnimationFrame(confRAF);
+    animateConfetti();
+    setTimeout(stopConfetti, 6000);
+}
+function animateConfetti() {
+    const canvas = document.getElementById("confettiCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confettiParts.forEach(p => {
+        p.x += p.vx; p.y += p.vy; p.rot += p.rotV; p.vy += 0.06;
+        ctx.save();
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+    });
+    confettiParts = confettiParts.filter(p => p.y < canvas.height + 20);
+    if (confettiParts.length > 0) confRAF = requestAnimationFrame(animateConfetti);
+    else stopConfetti();
+}
+function stopConfetti() {
+    if (confRAF) { cancelAnimationFrame(confRAF); confRAF = null; }
+    const canvas = document.getElementById("confettiCanvas");
+    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    canvas.style.display = "none";
+}
+
+/* ============================================================
+   ADMIN PANEL (all original logic preserved)
+   ============================================================ */
 const DEFAULT_ADMIN_PASSWORD = "daddypepe1931";
 let adminPassword = localStorage.getItem('familyFeudAdminPwd') || DEFAULT_ADMIN_PASSWORD;
 let adminAuthenticated = false;
-let adminEditData = []; // working copy during admin session
+let adminEditData = [];
 
 function openAdmin() {
     clearInterval(timerInterval);
@@ -699,12 +1333,11 @@ function closeAdmin() {
     document.getElementById("adminOverlay").classList.remove("active");
     adminAuthenticated = false;
     document.getElementById("adminEditArea").innerHTML = "";
-    resetTimer();
+    if (!gameOver) resetTimer();
 }
 
 function checkAdminPassword() {
-    const input = document.getElementById("adminPasswordInput").value;
-    if (input === adminPassword) {
+    if (document.getElementById("adminPasswordInput").value === adminPassword) {
         adminAuthenticated = true;
         document.getElementById("adminPasswordGate").style.display = "none";
         document.getElementById("adminContent").style.display = "block";
@@ -727,38 +1360,29 @@ function renderAdminQuestionList() {
     const list = document.getElementById("adminQuestionList");
     list.innerHTML = "";
     if (adminEditData.length === 0) {
-        list.innerHTML = '<p style="color:#aaa;text-align:center;">No questions yet. Click "+ Add New Question" to get started.</p>';
+        list.innerHTML = '<p style="color:#aaa;text-align:center;">No questions yet.</p>';
         return;
     }
     adminEditData.forEach((q, qi) => {
         const card = document.createElement("div");
         card.className = "admin-question-card";
         let answersHtml = q.answers.map((a, ai) =>
-            `<div style="color:#ccc;font-size:14px;margin-left:16px;">
-                ${ai + 1}. ${a.text} <span style="color:#ffd700;">(${a.points} pts)</span>
-            </div>`
+            `<div style="color:#ccc;font-size:13px;margin-left:16px;">${ai+1}. ${a.text} <span style="color:var(--gold);">(${a.points} pts)</span></div>`
         ).join("");
         card.innerHTML = `
             <div class="q-header">
-                <span>Q${qi + 1}: ${q.question}</span>
+                <span>Q${qi+1}: ${q.question}</span>
                 <div>
-                    <button class="admin-btn-primary" onclick="editQuestion(${qi})" style="font-size:13px;">Edit</button>
-                    <button class="admin-btn-danger" onclick="deleteQuestion(${qi})" style="font-size:13px;">Delete</button>
+                    <button class="admin-btn-primary" onclick="editQuestion(${qi})" style="font-size:12px;">Edit</button>
+                    <button class="admin-btn-danger" onclick="deleteQuestion(${qi})" style="font-size:12px;">Delete</button>
                 </div>
-            </div>
-            ${answersHtml}
-        `;
+            </div>${answersHtml}`;
         list.appendChild(card);
     });
 }
 
-function showAddForm() {
-    showEditForm(-1);
-}
-
-function editQuestion(index) {
-    showEditForm(index);
-}
+function showAddForm() { showEditForm(-1); }
+function editQuestion(index) { showEditForm(index); }
 
 function showEditForm(index) {
     const isNew = index === -1;
@@ -768,31 +1392,24 @@ function showEditForm(index) {
     function renderForm() {
         let answersHtml = q.answers.map((a, ai) => `
             <div class="admin-answer-row">
-                <input type="text" value="${a.text.replace(/"/g, '&quot;')}" placeholder="Answer text"
-                    onchange="this.dataset.val=this.value" data-val="${a.text.replace(/"/g, '&quot;')}" id="adminAnsText${ai}">
-                <input type="number" value="${a.points}" placeholder="Points" min="0"
-                    onchange="this.dataset.val=this.value" data-val="${a.points}" id="adminAnsPts${ai}">
-                <button class="admin-btn-danger" onclick="adminRemoveAnswer(${ai})" style="font-size:12px;padding:6px 10px;" ${q.answers.length <= 1 ? 'disabled' : ''}>X</button>
-            </div>
-        `).join("");
-
+                <input type="text" value="${a.text.replace(/"/g,'&quot;')}" placeholder="Answer text" id="adminAnsText${ai}">
+                <input type="number" value="${a.points}" placeholder="Pts" min="0" id="adminAnsPts${ai}">
+                <button class="admin-btn-danger" onclick="adminRemoveAnswer(${ai})" style="font-size:11px;padding:5px 9px;" ${q.answers.length<=1?'disabled':''}>✕</button>
+            </div>`).join("");
         area.innerHTML = `
             <div class="admin-edit-form">
                 <h3>${isNew ? "Add New Question" : "Edit Question"}</h3>
-                <label style="color:#aaa;font-size:14px;">Question:</label>
-                <input type="text" id="adminQuestionText" value="${q.question.replace(/"/g, '&quot;')}" placeholder="Enter the question">
-                <label style="color:#aaa;font-size:14px;margin-top:10px;display:block;">Answers:</label>
+                <label style="color:#aaa;font-size:13px;">Question:</label>
+                <input type="text" id="adminQuestionText" value="${q.question.replace(/"/g,'&quot;')}" placeholder="Enter the question">
+                <label style="color:#aaa;font-size:13px;margin-top:8px;display:block;">Answers:</label>
                 <div id="adminAnswersList">${answersHtml}</div>
-                <button class="admin-btn-secondary" onclick="adminAddAnswer()" style="margin-top:8px;font-size:13px;">+ Add Answer</button>
-                <div style="margin-top:15px;">
-                    <button class="admin-btn-success" onclick="adminSaveQuestion(${index})">Save Question</button>
+                <button class="admin-btn-secondary" onclick="adminAddAnswer()" style="margin-top:6px;font-size:12px;">+ Add Answer</button>
+                <div style="margin-top:12px;">
+                    <button class="admin-btn-success" onclick="adminSaveQuestion(${index})">Save</button>
                     <button class="admin-btn-secondary" onclick="document.getElementById('adminEditArea').innerHTML='';">Cancel</button>
                 </div>
-            </div>
-        `;
+            </div>`;
     }
-
-    // Store q on window so helper functions can access it
     window._adminEditQ = q;
     window._adminEditRender = renderForm;
     renderForm();
@@ -801,13 +1418,12 @@ function showEditForm(index) {
 
 function adminCollectCurrentAnswers() {
     const q = window._adminEditQ;
-    // Read current values from DOM back into q
     q.question = document.getElementById("adminQuestionText").value;
     q.answers.forEach((a, ai) => {
-        const textEl = document.getElementById("adminAnsText" + ai);
-        const ptsEl = document.getElementById("adminAnsPts" + ai);
-        if (textEl) a.text = textEl.value;
-        if (ptsEl) a.points = parseInt(ptsEl.value) || 0;
+        const t = document.getElementById("adminAnsText" + ai);
+        const p = document.getElementById("adminAnsPts" + ai);
+        if (t) a.text = t.value;
+        if (p) a.points = parseInt(p.value) || 0;
     });
 }
 
@@ -815,12 +1431,8 @@ function adminAddAnswer() {
     adminCollectCurrentAnswers();
     window._adminEditQ.answers.push({ text: "", points: 0 });
     window._adminEditRender();
-    // Focus the new answer field
-    const newIdx = window._adminEditQ.answers.length - 1;
-    setTimeout(() => {
-        const el = document.getElementById("adminAnsText" + newIdx);
-        if (el) el.focus();
-    }, 50);
+    const idx = window._adminEditQ.answers.length - 1;
+    setTimeout(() => { const el = document.getElementById("adminAnsText" + idx); if (el) el.focus(); }, 50);
 }
 
 function adminRemoveAnswer(ai) {
@@ -832,114 +1444,86 @@ function adminRemoveAnswer(ai) {
 function adminSaveQuestion(index) {
     adminCollectCurrentAnswers();
     const q = window._adminEditQ;
-
-    // Validate
-    if (!q.question.trim()) {
-        showAdminMsg("Question text cannot be empty.", "error");
-        return;
-    }
-    // Remove empty answers
+    if (!q.question.trim()) { showAdminMsg("Question text cannot be empty.", "error"); return; }
     q.answers = q.answers.filter(a => a.text.trim() !== "");
-    if (q.answers.length === 0) {
-        showAdminMsg("You need at least one answer.", "error");
-        return;
-    }
-    // Add revealed:false to all answers
+    if (q.answers.length === 0) { showAdminMsg("Need at least one answer.", "error"); return; }
     q.answers.forEach(a => a.revealed = false);
-
-    if (index === -1) {
-        adminEditData.push(q);
-        showAdminMsg("Question added!", "success");
-    } else {
-        adminEditData[index] = q;
-        showAdminMsg("Question updated!", "success");
-    }
+    if (index === -1) { adminEditData.push(q); showAdminMsg("Question added!", "success"); }
+    else { adminEditData[index] = q; showAdminMsg("Question updated!", "success"); }
     document.getElementById("adminEditArea").innerHTML = "";
     renderAdminQuestionList();
 }
 
 function deleteQuestion(index) {
-    if (!confirm(`Delete question "${adminEditData[index].question}"?`)) return;
+    if (!confirm(`Delete: "${adminEditData[index].question}"?`)) return;
     adminEditData.splice(index, 1);
-    showAdminMsg("Question deleted.", "success");
+    showAdminMsg("Deleted.", "success");
     renderAdminQuestionList();
 }
 
 function deleteAllQuestions() {
-    if (!confirm("Delete ALL questions? This cannot be undone.")) return;
-    if (!confirm("Are you really sure? All questions will be removed.")) return;
+    if (!confirm("Delete ALL questions?")) return;
+    if (!confirm("Are you sure?")) return;
     adminEditData = [];
     showAdminMsg("All questions deleted.", "success");
     renderAdminQuestionList();
 }
 
 function resetToDefaults() {
-    if (!confirm("Reset all questions to the original defaults? Any custom questions will be lost.")) return;
+    if (!confirm("Reset to default questions?")) return;
     adminEditData = JSON.parse(JSON.stringify(defaultGameData));
-    showAdminMsg("Questions reset to defaults.", "success");
+    showAdminMsg("Reset to defaults.", "success");
     renderAdminQuestionList();
 }
 
 function showChangePassword() {
-    const area = document.getElementById("adminEditArea");
-    area.innerHTML = `
+    document.getElementById("adminEditArea").innerHTML = `
         <div class="admin-edit-form">
             <h3>Change Admin Password</h3>
-            <label style="color:#aaa;font-size:14px;">Current Password:</label>
-            <input type="password" id="cpwdCurrent" placeholder="Enter current password">
-            <label style="color:#aaa;font-size:14px;margin-top:8px;display:block;">New Password:</label>
-            <input type="password" id="cpwdNew" placeholder="Enter new password">
-            <label style="color:#aaa;font-size:14px;margin-top:8px;display:block;">Confirm New Password:</label>
+            <input type="password" id="cpwdCurrent" placeholder="Current password">
+            <input type="password" id="cpwdNew" placeholder="New password">
             <input type="password" id="cpwdConfirm" placeholder="Confirm new password" onkeydown="if(event.key==='Enter')saveNewPassword()">
-            <div style="margin-top:15px;">
-                <button class="admin-btn-success" onclick="saveNewPassword()">Update Password</button>
+            <div style="margin-top:12px;">
+                <button class="admin-btn-success" onclick="saveNewPassword()">Update</button>
                 <button class="admin-btn-secondary" onclick="document.getElementById('adminEditArea').innerHTML='';">Cancel</button>
             </div>
-        </div>
-    `;
+        </div>`;
     document.getElementById("cpwdCurrent").focus();
 }
 
 function saveNewPassword() {
-    const current = document.getElementById("cpwdCurrent").value;
-    const newPwd = document.getElementById("cpwdNew").value;
-    const confirm = document.getElementById("cpwdConfirm").value;
-    if (current !== adminPassword) { showAdminMsg("Current password is incorrect.", "error"); return; }
-    if (!newPwd || newPwd.length < 4) { showAdminMsg("New password must be at least 4 characters.", "error"); return; }
-    if (newPwd !== confirm) { showAdminMsg("New passwords do not match.", "error"); return; }
-    adminPassword = newPwd;
+    const cur = document.getElementById("cpwdCurrent").value;
+    const nw = document.getElementById("cpwdNew").value;
+    const cf = document.getElementById("cpwdConfirm").value;
+    if (cur !== adminPassword) { showAdminMsg("Current password incorrect.", "error"); return; }
+    if (!nw || nw.length < 4) { showAdminMsg("New password must be 4+ characters.", "error"); return; }
+    if (nw !== cf) { showAdminMsg("Passwords don't match.", "error"); return; }
+    adminPassword = nw;
     localStorage.setItem('familyFeudAdminPwd', adminPassword);
     document.getElementById("adminEditArea").innerHTML = "";
-    showAdminMsg("Password changed successfully!", "success");
+    showAdminMsg("Password changed!", "success");
 }
 
 function saveAndClose() {
-    // Commit adminEditData to gameData and localStorage
     gameData = JSON.parse(JSON.stringify(adminEditData));
     gameData.forEach(q => q.answers.forEach(a => a.revealed = false));
     localStorage.setItem('familyFeudQuestions', JSON.stringify(gameData));
-
-    // Reset game state
     currentQuestionIndex = 0;
     currentTeam = "A";
     strikes = { A: 0, B: 0 };
     teamPoints = { A: 0, B: 0 };
+    gameOver = false;
     document.getElementById("guessInput").disabled = false;
-    document.querySelectorAll("button").forEach(b => b.disabled = false);
-    document.getElementById("finalResult").innerText = "";
-    document.body.classList.remove("win-background");
-
+    document.getElementById("submitBtn").disabled = false;
+    document.querySelectorAll(".ctrl-btn").forEach(b => b.disabled = false);
+    document.getElementById("newGameBtn").style.display = "none";
     closeAdmin();
-    if (gameData.length > 0) {
-        loadQuestion();
-    } else {
-        document.getElementById("question").innerText = "No questions loaded. Open Admin Panel to add questions.";
-        document.getElementById("answers").innerHTML = "";
+    if (gameData.length > 0) loadQuestion();
+    else {
+        document.getElementById("questionText").textContent = "No questions loaded. Open Admin Panel to add questions.";
+        document.getElementById("answersGrid").innerHTML = "";
     }
 }
-
-loadQuestion();
 </script>
-
 </body>
 </html>
